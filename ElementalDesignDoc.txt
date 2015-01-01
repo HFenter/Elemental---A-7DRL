@@ -1,0 +1,20 @@
+Elemental
+
+Design Goals
+
+1. You're the Pet.  Actually you're a summoned "Elemental".
+2. You're goal is to keep your mage alive.  If he dies, game over.  If you die, you get resummoned in a slightly weaker form, based on your mages current level (and perhaps a hidden mage essence tracker ?).
+3. As you kill things, you gain their elemental essence ( Light, Dark, Earth, Fire, Water )
+4. You can choose to absorb this essence ( or save it for later ? ) or not, thereby tweaking your overall essence. 
+5. By tweaking your essence, your basically morphing yourself to one of the typical RPG roles (tank, healer, dps, etc)
+
+Typical RougeLike random dungeon world
+x levels to a final boss level
+
+
+
+Random Ideas
+
+Can loose track of your mage, but you can always "sense" his general direction.
+Some loot for your mage perhaps?
+
