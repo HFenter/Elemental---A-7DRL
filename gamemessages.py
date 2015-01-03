@@ -6,6 +6,7 @@ import config
 
 import gameobjects
 import gamescreen
+import gamespells
 
 game_msgs = []
 

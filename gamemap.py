@@ -79,6 +79,7 @@ def make_map():
 	
 	#load the monsters and items for placing
     gameobjects.get_monster_types()
+    gameobjects.get_item_types()
  
     #fill map with "blocked" tiles
     map = [[ Tile(True)

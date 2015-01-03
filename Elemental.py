@@ -92,6 +92,9 @@ def load_game():
 	file = shelve.open('savegame', 'r')
 	gamemap.map = file['map']
 	gameobjects.objects = file['objects']
+	for object in gameobjects.objects:
+		if object.ai and isinstance(object.ai, gameobjects.ChaseMonster):
+			object.ai.path = None
 	gameobjects.player = gameobjects.objects[file['player_index']]  #get index of player in objects list and access it
 	gamemap.stairs = gameobjects.objects[file['stairs_index']]  #same for the stairs
 	gameobjects.inventory = file['inventory']

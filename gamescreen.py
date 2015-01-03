@@ -5,13 +5,12 @@ import config
 
 import gamemap
 import gameobjects
-
 import gamemessages
-
 import gameinput
 
 camera_x = 0
 camera_y = 0
+pentImg = None
 
 
 def menu(header, options, width):
@@ -139,10 +138,23 @@ def render_bar(x, y, total_width, name, value, maximum, bar_color, back_color, c
 	libtcod.console_print_ex(console, x + total_width / 2, y, libtcod.BKGND_NONE, libtcod.CENTER,
 		name + ': ' + str(value) + '/' + str(maximum))
  
+def render_bar_school(x, y, total_width, value, maximum, bar_color, back_color, console):
+	#render a bar (HP, experience, etc). first calculate the width of the bar
+	bar_width = int(float(value) / maximum * total_width)
+ 
+	#render the background first
+	libtcod.console_set_default_background(console, back_color)
+	libtcod.console_rect(console, x, y, total_width, 1, False, libtcod.BKGND_SCREEN)
+ 
+	#now render the bar on top
+	libtcod.console_set_default_background(console, bar_color)
+	if bar_width > 0:
+		libtcod.console_rect(console, x, y, bar_width, 1, False, libtcod.BKGND_SCREEN)
+ 
 
 
 def render_all():
-	global fov_map, fov_recompute
+	global fov_map, fov_recompute, pentImg
 
 	move_camera(gameobjects.player.x, gameobjects.player.y)
  
@@ -181,7 +193,7 @@ def render_all():
 		if object != gameobjects.player:
 			object.draw()
 	gameobjects.player.draw()
- 
+
 	#blit the contents of "con" to the root console
 	libtcod.console_blit(con, 0, 0, config.MAP_WIDTH, config.MAP_HEIGHT, 0, 0, 0)
 
@@ -223,6 +235,16 @@ def render_all():
 	#########################################
 	libtcod.console_set_default_background(elm, libtcod.black)
 	libtcod.console_clear(elm)
+
+	if pentImg is None:
+		pentImg = libtcod.image_load('ElementalStarTiny.png')
+		libtcod.image_set_key_color(pentImg,libtcod.black)
+	x = 16
+	y = 5
+	libtcod.image_blit_2x(pentImg, elm, x, y)
+
+
+
  	libtcod.console_set_default_foreground(elm, libtcod.blue)
 	libtcod.console_print_ex(elm, 1, 1, libtcod.BKGND_NONE, libtcod.LEFT, 'Elemental Panel')
 
@@ -243,18 +265,49 @@ def render_all():
 	else:
 		libtcod.console_print_ex(elm, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, 'XXX%cDead%cXXX'%( libtcod.COLCTRL_5,libtcod.COLCTRL_STOP ))
 
+	# Current Level
+	libtcod.console_set_default_foreground(elm, libtcod.dark_amber)
+	libtcod.console_print_ex(elm, config.INFO_BAR_WIDTH-2, 2, libtcod.BKGND_NONE, libtcod.RIGHT, 'Level ' + str(gameobjects.player.level))
+
+
+	#OLD Status Bars
 	#render_bar(2, 5, (config.INFO_BAR_WIDTH-4), 'HP', gameobjects.player.fighter.hp, gameobjects.player.fighter.max_hp, libtcod.light_red, libtcod.darker_red, elm)
 
-	libtcod.console_set_default_foreground(elm, libtcod.dark_amber)
-	libtcod.console_print_ex(elm, 2, 6, libtcod.BKGND_NONE, libtcod.LEFT, 'Level ' + str(gameobjects.player.level))
+	#level_up_xp = config.LEVEL_UP_BASE + gameobjects.player.level * config.LEVEL_UP_FACTOR
+	#render_bar(2, 7, (config.INFO_BAR_WIDTH-4), 'XP', gameobjects.player.fighter.xp, level_up_xp, libtcod.light_green, libtcod.darker_green, elm)
+	
+	
+	school_width = 12
+	school_spacing = 5#(((config.CAMERA_WIDTH / 5) - 10)/2)
+	school_first_y = 7
 
-	level_up_xp = config.LEVEL_UP_BASE + gameobjects.player.level * config.LEVEL_UP_FACTOR
-	render_bar(2, 7, (config.INFO_BAR_WIDTH-4), 'XP', gameobjects.player.fighter.xp, level_up_xp, libtcod.light_green, libtcod.darker_green, elm)
+	libtcod.console_set_default_foreground(elm, libtcod.darker_yellow)
+	libtcod.console_print_ex(elm, 2, school_first_y-1, libtcod.BKGND_NONE, libtcod.LEFT, '1) Air')
+	render_bar_school(2, school_first_y, school_width, 2, 5, libtcod.yellow, libtcod.darker_yellow, elm)
+	
+	libtcod.console_set_default_foreground(elm, libtcod.darker_purple)
+	libtcod.console_print_ex(elm, 2, school_first_y+(school_spacing*1)-1, libtcod.BKGND_NONE, libtcod.LEFT, '2) Spirit')
+	render_bar_school(2, school_first_y+(school_spacing*1), school_width, 2, 5, libtcod.purple, libtcod.darker_purple, elm)
+
+	libtcod.console_set_default_foreground(elm, libtcod.darker_blue)
+	libtcod.console_print_ex(elm, 2, school_first_y+(school_spacing*2)-1, libtcod.BKGND_NONE, libtcod.LEFT, '3) Water')
+	render_bar_school(2, school_first_y+(school_spacing*2), school_width, 1, 5, libtcod.blue, libtcod.darker_blue, elm)
+
+	libtcod.console_set_default_foreground(elm, libtcod.darker_red)
+	libtcod.console_print_ex(elm, 2, school_first_y+(school_spacing*3)-1, libtcod.BKGND_NONE, libtcod.LEFT, '4) Fire')
+	render_bar_school(2, school_first_y+(school_spacing*3), school_width, 3, 5, libtcod.red, libtcod.darker_red, elm)
+
+	libtcod.console_set_default_foreground(elm, libtcod.darker_green)
+	libtcod.console_print_ex(elm, 2, school_first_y+(school_spacing*4)-1, libtcod.BKGND_NONE, libtcod.LEFT, '5) Earth')
+	render_bar_school(2, school_first_y+(school_spacing*4), school_width, 4, 5, libtcod.green, libtcod.darker_green, elm)
+
+	libtcod.console_set_default_foreground(elm, libtcod.black)
+	libtcod.console_set_default_background(elm, libtcod.black)
 
 	
 	libtcod.console_set_default_foreground(elm, libtcod.white)
-	libtcod.console_print_frame(elm,0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4, clear=False)
-	libtcod.console_blit(elm, 0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4, 0, config.CAMERA_WIDTH, 8)
+	libtcod.console_print_frame(elm,0, 0, config.INFO_BAR_WIDTH, config.CAMERA_HEIGHT - 18, clear=False)
+	libtcod.console_blit(elm, 0, 0, config.INFO_BAR_WIDTH, config.CAMERA_HEIGHT - 18, 0, config.CAMERA_WIDTH, 8)
 
 	#########################################
 	# 	Mage Info Panel				#
@@ -262,11 +315,11 @@ def render_all():
 	libtcod.console_set_default_background(mag, libtcod.black)
 	libtcod.console_clear(mag)
  	libtcod.console_set_default_foreground(mag, libtcod.green)
-	libtcod.console_print_ex(mag, 2, 2, libtcod.BKGND_NONE, libtcod.LEFT, 'Mage Panel')
+	libtcod.console_print_ex(mag, 1, 1, libtcod.BKGND_NONE, libtcod.LEFT, 'Mage Panel')
 	
 	libtcod.console_set_default_foreground(mag, libtcod.white)
-	libtcod.console_print_frame(mag,0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4, clear=False)
-	libtcod.console_blit(mag, 0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4, 0, config.CAMERA_WIDTH, (config.CAMERA_HEIGHT / 2)+4)
+	libtcod.console_print_frame(mag,0, 0, config.INFO_BAR_WIDTH, 10, clear=False)
+	libtcod.console_blit(mag, 0, 0, config.INFO_BAR_WIDTH, 10, 0, config.CAMERA_WIDTH, config.CAMERA_HEIGHT-10)
 
 
 
@@ -291,7 +344,7 @@ def game_screen_init():
 	con = libtcod.console_new(config.MAP_WIDTH, config.MAP_HEIGHT) #main viewport - Top Left
 	mes = libtcod.console_new(config.SCREEN_WIDTH, config.MESSAGE_BAR_HEIGHT) #Message bar - Bottom
 	wor = libtcod.console_new(config.INFO_BAR_WIDTH, 8 ) #World Info - Right Top
-	elm = libtcod.console_new(config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4) #Elemental Info (you) - Right Top
-	mag = libtcod.console_new(config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4) #Mage Info - Right Bottom
+	elm = libtcod.console_new(config.INFO_BAR_WIDTH, config.CAMERA_HEIGHT - 14) #Elemental Info (you) - Right Top
+	mag = libtcod.console_new(config.INFO_BAR_WIDTH, 18) #Mage Info - Right Bottom
 
 

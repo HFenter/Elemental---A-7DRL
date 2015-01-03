@@ -1,0 +1,64 @@
+{
+	"Items":[
+		{
+			"name":"Small Healing Potion",
+			"char":"!",
+			"color":"light_violet",
+			"description":"A small healing potion.",
+			"power1":35,
+			"power2":0,
+			"power3":0,
+			"value":100,
+			"use_function":"gamespells.cast_heal",
+			"chance_table": [[35, 1], [40, 2], [60, 3], [0, 4]]
+		},
+		{
+			"name":"Medium Healing Potion",
+			"char":"!",
+			"color":"light_violet",
+			"description":"A medium healing potion.",
+			"power1":65,
+			"power2":0,
+			"power3":0,
+			"value":400,
+			"use_function":"gamespells.cast_heal",
+			"chance_table": [[5, 1], [20, 3], [50, 5], [90, 8], [0, 12]]
+		},
+		{
+			"name":"Scroll of Lightning Bolt",
+			"char":"#",
+			"color":"light_yellow",
+			"description":"A scroll of lightning.",
+			"power1":40,
+			"power2":0,
+			"power3":0,
+			"value":200,
+			"use_function":"gamespells.cast_lightning",
+			"chance_table": [[15, 1], [20, 2], [25, 3], [30, 4]]
+		},
+		{
+			"name":"Scroll of Fireball",
+			"char":"#",
+			"color":"dark_orange",
+			"description":"A scroll of fireball.",
+			"power1":30,
+			"power2":10,
+			"power3":0,
+			"value":300,
+			"use_function":"gamespells.cast_fireball",
+			"chance_table": [[15, 1], [20, 2], [25, 3], [30, 4]]
+		},
+		{
+			"name":"Scroll of Confusion",
+			"char":"#",
+			"color":"light_cyan",
+			"description":"A scroll of confusion.",
+			"power1":4,
+			"power2":15,
+			"power3":0,
+			"value":300,
+			"use_function":"gamespells.cast_confuse",
+			"chance_table": [[15, 1], [20, 2], [25, 3], [30, 4]]
+		}
+	]
+}

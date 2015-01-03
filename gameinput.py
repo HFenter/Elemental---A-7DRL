@@ -6,6 +6,7 @@ import gamescreen
 import gameactions
 import gamemessages
 import gamemap
+import gamespells
 
 key = libtcod.Key()
 mouse = libtcod.Mouse()
@@ -82,6 +83,9 @@ def handle_keys():
 			if key_char == '~':
 				#cheat mode!
 				gameobjects.player.fighter.xp = (config.LEVEL_UP_BASE + gameobjects.player.level * config.LEVEL_UP_FACTOR) -1
+			if key_char == '*':
+				#cheat mode! confuse
+				gamespells.cast_confuse(power1=10, power2=20, power3=0)
 			
 			return 'no-turn'
 

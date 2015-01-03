@@ -10,6 +10,7 @@ import gamescreen
 import gamemessages
 import gameinput
 import gameactions
+import gamespells
 
 inventory = []
 
@@ -104,8 +105,13 @@ class Object:
 
 class Item:
     #an item that can be picked up and used.
-    def __init__(self, use_function=None):
+    def __init__(self, use_function=None, power1=0, power2=0, power3=0):
         self.use_function = use_function
+        #pass some generic variables so we can use them in the use_function
+        # ( I don't like this method, but i can fix it later )
+        self.power1 = power1
+        self.power2 = power2
+        self.power3 = power3
  
     def pick_up(self):
         #add to the player's inventory and remove from the map
@@ -132,7 +138,7 @@ class Item:
         if self.use_function is None:
             gamemessages.message('The ' + self.owner.name + ' cannot be used.')
         else:
-            if self.use_function() != 'cancelled':
+            if self.use_function(self.power1) != 'cancelled':
                 inventory.remove(self.owner)  #destroy after use, unless it was cancelled for some reason
  
 
@@ -291,8 +297,23 @@ class ConfusedMonster:
     def take_turn(self):
         if self.num_turns > 0:  #still confused...
             #move in a random direction, and decrease the number of turns confused
-            self.owner.move(libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1))
-            self.num_turns -= 1
+			dx = libtcod.random_get_int(0, -1, 1)
+			dy = libtcod.random_get_int(0, -1, 1)
+			
+			#try to find an attackable object there
+			target = None
+			for object in objects:
+				if object.fighter and object.x == self.owner.x + dx and object.y == self.owner.y + dy:
+					target = object
+					break
+			#attack
+			if target is not None:
+				self.owner.fighter.attack(target)
+			elif gamemap.is_blocked(self.owner.x + dx, self.owner.y + dy):
+				gamemessages.message('The ' + self.owner.name + ' stumbles into the wall!', libtcod.red)
+			else:
+				self.owner.move(dx, dy)
+			self.num_turns -= 1
  
         else:  #restore the previous AI (this one will be deleted because it's not referenced anymore)
             self.owner.ai = self.old_ai
@@ -410,6 +431,7 @@ def get_monster_types():
 
 def create_monster(type_id, start_x, start_y):
 	#create a monster from the monster list
+	global monster_list
 	fighter_component = Fighter(
 		hp=int(monster_list["Monsters"][type_id]["hp"]),
 		defence=int(monster_list["Monsters"][type_id]["defence"]),
@@ -437,9 +459,47 @@ def create_monster(type_id, start_x, start_y):
 	objects.append(monster)
 
 
+def get_item_types():
+	global item_list, item_chances, max_items
+	item_chances = {}
+	#maximum number of item per room
+	max_items = from_dungeon_level([[5, 1], [2, 2], [3, 4], [5, 6]])
+	
+	json_data=open('data/items.json')
+	item_list = json.load(json_data)
+	json_data.close()
+	for idx, item in enumerate(item_list["Items"]):
+		print "Loading Items: " + str(idx) + " " + item["name"]
+		item_chances[idx] = from_dungeon_level(item["chance_table"])
+
+
+def create_item(type_id, start_x, start_y):
+	#create an item from the item list
+	global item_list
+	item_component = Item(
+		use_function=eval(item_list["Items"][type_id]["use_function"]),
+		power1 = item_list["Items"][type_id]["power1"],
+		power2 = item_list["Items"][type_id]["power2"],
+		power3 = item_list["Items"][type_id]["power3"]	
+		)
+	item = Object(
+		start_x, 
+		start_y, 
+		str(item_list["Items"][type_id]["char"]), 
+		str(item_list["Items"][type_id]["name"]), 
+		eval('libtcod.' + item_list["Items"][type_id]["color"]), 
+		item=item_component
+		)
+
+	objects.append(item)
+	item.send_to_back()  #items appear below other objects
+	item.always_visible = True  #items are visible even out-of-FOV, if in an explored area
+
+
+
 
 def place_objects(room):
-	global objects, monster_list, monster_chances, max_monsters
+	global objects, monster_list, monster_chances, max_monsters, item_list, item_chances, max_items
 	
 	#choose random number of monsters
 	num_monsters = libtcod.random_get_int(0, 0, max_monsters)
@@ -453,17 +513,6 @@ def place_objects(room):
 		if not gamemap.is_blocked(x, y):
 			create_monster(random_choice(monster_chances), x, y)
  
-
-	#maximum number of items per room
-	max_items = from_dungeon_level([[4, 1], [10, 4]])
-
-	#chance of each item (by default they have a chance of 0 at level 1, which then goes up)
-	item_chances = {}
-	item_chances['heal'] = 35  #healing potion always shows up, even if all other items have 0 chance
-	item_chances['lightning'] = from_dungeon_level([[25, 2]])
-	item_chances['fireball'] =  from_dungeon_level([[25, 4]])
-	item_chances['confuse'] =   from_dungeon_level([[10, 3]])
-
 	#choose random number of items
 	num_items = libtcod.random_get_int(0, 0, max_items)
 
@@ -474,31 +523,8 @@ def place_objects(room):
 
 		#only place it if the tile is not blocked
 		if not gamemap.is_blocked(x, y):
-			choice = random_choice(item_chances)
-			if choice == 'heal':
-				#create a healing potion
-				item_component = Item(use_function=gameactions.cast_heal)
-				item = Object(x, y, '!', 'Healing Potion', libtcod.violet, item=item_component)
-
-			elif choice == 'lightning':
-				#create a lightning bolt scroll
-				item_component = Item(use_function=gameactions.cast_lightning)
-				item = Object(x, y, '#', 'Scroll of Lightning Bolt', libtcod.light_yellow, item=item_component)
-
-			elif choice == 'fireball':
-				#create a fireball scroll
-				item_component = Item(use_function=gameactions.cast_fireball)
-				item = Object(x, y, '#', 'Scroll of Fireball', libtcod.light_yellow, item=item_component)
-
-			elif choice == 'confuse':
-				#create a confuse scroll
-				item_component = Item(use_function=gameactions.cast_confuse)
-				item = Object(x, y, '#', 'Scroll of Confusion', libtcod.light_yellow, item=item_component)
-
-			objects.append(item)
-			item.send_to_back()  #items appear below other objects
-			item.always_visible = True  #items are visible even out-of-FOV, if in an explored area
-
+			create_item(random_choice(item_chances), x, y)
+			
 
 
 
