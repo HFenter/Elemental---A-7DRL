@@ -1,5 +1,7 @@
 import libtcodpy as libtcod
 import math
+import json
+from pprint import pprint
 
 import config
 
@@ -22,6 +24,7 @@ class Object:
 		self.color = color
 		self.blocks = blocks
 		self.always_visible = always_visible
+		self.location_seen = False
 		self.fighter = fighter
 		if self.fighter:  #let the fighter component know who owns it
 			self.fighter.owner = self
@@ -40,6 +43,9 @@ class Object:
 		if not gamemap.is_blocked(self.x + dx, self.y + dy):
 			self.x += dx
 			self.y += dy
+		elif self.char == '@' and gamemessages.game_msgs[len(gamemessages.game_msgs)-1][0]!='There is something in the way!':
+			#if walking into blocking object, let them know (once)
+			gamemessages.message('There is something in the way!',libtcod.dark_red)
 
 	def move_towards(self, target_x, target_y):
 		#vector from this object to the target, and distance
@@ -74,9 +80,22 @@ class Object:
 		if libtcod.map_is_in_fov(gamescreen.fov_map, self.x, self.y):
 			(x, y) = gamescreen.to_camera_coordinates(self.x, self.y)
 			if x is not None:
+				#set this item as seen
+				self.location_seen = True
+				if isinstance(self.ai, ChaseMonster):
+					self.ai.seen_player = True
 				#set the color and then draw the character that represents this object at its position
 				libtcod.console_set_default_foreground(gamescreen.con, self.color)
 				libtcod.console_put_char(gamescreen.con, x, y, self.char, libtcod.BKGND_NONE)
+		#always visible item, show it darker (out of FoV)
+		elif self.always_visible and self.location_seen:
+			(x, y) = gamescreen.to_camera_coordinates(self.x, self.y)
+			if x is not None:
+				#set the color as a lerp of the item color and dark ground
+				tmp_color = libtcod.color_lerp( config.color_dark_ground, self.color,.5)
+				libtcod.console_set_default_foreground(gamescreen.con, tmp_color)
+				libtcod.console_put_char(gamescreen.con, x, y, self.char, libtcod.BKGND_NONE)
+
 	def clear(self):
 		#erase the character that represents this object
 		(x, y) = gamescreen.to_camera_coordinates(self.x, self.y)
@@ -99,13 +118,12 @@ class Item:
  
  
     def drop(self):
-
- 
         #add to the map and remove from the player's inventory. also, place it at the player's coordinates
         objects.append(self.owner)
         inventory.remove(self.owner)
         self.owner.x = player.x
         self.owner.y = player.y
+        self.owner.location_seen = True
         gamemessages.message('You dropped a ' + self.owner.name + '.', libtcod.yellow)
  
     def use(self):
@@ -124,10 +142,10 @@ class Item:
 
 class Fighter:
 	#combat-related properties and methods (monster, player, NPC).
-	def __init__(self, hp, defense, power, xp, death_function=None):
+	def __init__(self, hp, defence, power, xp, death_function=None):
 		self.base_max_hp = hp
 		self.hp = hp
-		self.base_defense = defense
+		self.base_defence = defence
 		self.base_power = power
 		self.xp = xp
 		self.death_function = death_function
@@ -138,9 +156,9 @@ class Fighter:
 		return self.base_power + bonus
 
 	@property
-	def defense(self):  #return actual defense, by summing up the bonuses from all equipped items
-		bonus = 0#sum(equipment.defense_bonus for equipment in get_all_equipped(self.owner))
-		return self.base_defense + bonus
+	def defence(self):  #return actual defence, by summing up the bonuses from all equipped items
+		bonus = 0#sum(equipment.defence_bonus for equipment in get_all_equipped(self.owner))
+		return self.base_defence + bonus
 
 	@property
 	def max_hp(self):  #return actual max_hp, by summing up the bonuses from all equipped items
@@ -149,7 +167,13 @@ class Fighter:
 
 	def attack(self, target):
 		#a simple formula for attack damage
-		damage = self.power - target.fighter.defense
+
+		dmg_mult = libtcod.random_get_int(0, 0, 600)
+		dmg = math.floor( (self.power * dmg_mult)/100)
+		den_mult = libtcod.random_get_int(0, 0, 600)
+		den = math.floor( (target.fighter.defence * den_mult)/100)
+
+		damage = int(dmg - den)
 
 		if damage > 0:
 			#make the target take some damage
@@ -192,6 +216,114 @@ class BasicMonster:
 				monster.fighter.attack(player)
 
 
+class ChaseMonster:
+	def __init__(self, seen_player=False, chase_range=20, chase_dist=100):
+		self.seen_player = seen_player
+		self.path = None
+		self.is_giving_chase = False
+		self.chase_range = chase_range
+		self.base_chase_dist = chase_dist
+		self.chase_dist = chase_dist
+		self.orig_x = 0
+		self.orig_y = 0
+		self.move_to_home = False
+
+	def take_turn(self):
+		if self.path is None:
+			self.path = libtcod.path_new_using_map(gamescreen.fov_map)
+		monster = self.owner
+		if self.orig_x == 0:
+			#create home location
+			self.orig_x = monster.x
+			self.orig_y = monster.y
+		#chase up to chase_range squares away for a max of chase_dist from starting point
+		if monster.distance_to(player) <= self.chase_range and self.seen_player and self.chase_dist >= 1 and not self.move_to_home:
+			#the monster has begun to give chase
+			if not self.is_giving_chase:
+				self.is_giving_chase = True
+				gamemessages.message('The ' + monster.name + ' seems to have noticed you.', libtcod.dark_yellow)
+			#move towards player if far away
+			if monster.distance_to(player) >= 2:
+				if gameinput.path_recalc:
+					libtcod.path_compute(self.path, monster.x, monster.y, player.x, player.y)
+				path_px, path_py = libtcod.path_walk(self.path, True)
+				if path_px is not None and path_py is not None:
+					monster.move_towards(path_px, path_py)
+					self.chase_dist -= 1
+			#close enough, attack! (if the player is still alive.)
+			elif player.fighter.hp > 0:
+				monster.fighter.attack(player)
+				#they're fighting, so he'll chase further
+				self.chase_dist += 2
+		elif self.chase_dist >= 1 and monster.distance_to(player) > self.chase_range and not self.move_to_home and self.is_giving_chase:
+			gamemessages.message('You seem to lose the ' + monster.name + '.', libtcod.dark_green)
+			self.move_to_home = True
+			self.is_giving_chase = False
+		elif self.chase_dist < 1 and not self.move_to_home and self.is_giving_chase:
+			gamemessages.message('The ' + monster.name + ' seems to lose interest in persuing you and begins to wander back to its home.', libtcod.dark_green)
+			self.move_to_home = True
+			self.is_giving_chase = False
+		elif self.move_to_home:
+			if gameinput.path_recalc:
+				libtcod.path_compute(self.path, monster.x, monster.y, self.orig_x, self.orig_y)
+			path_px, path_py = libtcod.path_walk(self.path, True)
+			if path_px is not None and path_py is not None:
+				monster.move_towards(path_px, path_py)
+			elif path_px == monster.x and path_py == monster.y:
+				#gamemessages.message('The ' + monster.name + ' is home.', libtcod.dark_blue)
+				self.move_to_home = False
+				self.seen_player = False
+				self.chase_dist = self.base_chase_dist
+			else:
+				#gamemessages.message('The ' + monster.name + ' is home.', libtcod.dark_blue)
+				self.move_to_home = False
+				self.seen_player = False
+				self.chase_dist = self.base_chase_dist
+			
+
+
+class ConfusedMonster:
+    #AI for a temporarily confused monster (reverts to previous AI after a while).
+    def __init__(self, old_ai, num_turns=6):
+        self.old_ai = old_ai
+        self.num_turns = num_turns
+ 
+    def take_turn(self):
+        if self.num_turns > 0:  #still confused...
+            #move in a random direction, and decrease the number of turns confused
+            self.owner.move(libtcod.random_get_int(0, -1, 1), libtcod.random_get_int(0, -1, 1))
+            self.num_turns -= 1
+ 
+        else:  #restore the previous AI (this one will be deleted because it's not referenced anymore)
+            self.owner.ai = self.old_ai
+            gamemessages.message('The ' + self.owner.name + ' is no longer confused!', libtcod.red)
+ 
+def check_level_up():
+    #see if the player's experience is enough to level-up
+    level_up_xp = config.LEVEL_UP_BASE + player.level * config.LEVEL_UP_FACTOR
+    if player.fighter.xp >= level_up_xp:
+        #it is! level up and ask to raise some stats
+        player.level += 1
+        player.fighter.xp -= level_up_xp
+        gamemessages.message('Your battle skills grow stronger! You reached level ' + str(player.level) + '!', libtcod.yellow)
+ 
+        choice = None
+        while choice == None:  #keep asking until a choice is made
+            choice = gamescreen.menu('Level up! Choose a stat to raise:\n',
+                          ['Constitution (+20 HP, from ' + str(player.fighter.max_hp) + ')',
+                           'Strength (+1 attack, from ' + str(player.fighter.power) + ')',
+                           'Agility (+1 defence, from ' + str(player.fighter.defence) + ')'], 40)
+ 
+        if choice == 0:
+            player.fighter.base_max_hp += 20
+            player.fighter.hp += 20
+        elif choice == 1:
+            player.fighter.base_power += 1
+        elif choice == 2:
+            player.fighter.base_defence += 1
+        player.fighter.heal(35)
+
+
 def player_death(player):
     #the game ended!
     global game_state
@@ -210,8 +342,10 @@ def monster_death(monster):
     monster.color = libtcod.dark_red
     monster.blocks = False
     monster.fighter = None
+    monster.always_visible = True
+    #monster.location_seen = True
     monster.ai = None
-    monster.name = 'remains of ' + monster.name
+    monster.name = 'Remains of ' + monster.name
     monster.send_to_back()
 
 
@@ -246,37 +380,69 @@ def from_dungeon_level(table):
             return value
     return 0
 
+def closest_monster(max_range):
+	#find closest enemy, up to a maximum range, and in the player's FOV
+	closest_enemy = None
+	closest_dist = max_range + 1  #start with (slightly more than) maximum range
+ 
+	for object in objects:
+		if object.fighter and not object == player and libtcod.map_is_in_fov(gamescreen.fov_map, object.x, object.y):
+			#calculate distance between this object and the player
+			dist = player.distance_to(object)
+			if dist < closest_dist:  #it's closer, so remember it
+				closest_enemy = object
+				closest_dist = dist
+	return closest_enemy
+
+def get_monster_types():
+	global monster_list, monster_chances, max_monsters
+	monster_chances = {}
+	#maximum number of monsters per room
+	max_monsters = from_dungeon_level([[5, 1], [2, 2], [3, 4], [5, 6]])
+	
+	json_data=open('data/monsters.json')
+	monster_list = json.load(json_data)
+	json_data.close()
+	for idx, monster in enumerate(monster_list["Monsters"]):
+		print "Loading Monster: " + str(idx) + " " + monster["name"]
+		monster_chances[idx] = from_dungeon_level(monster["chance_table"])
+
+
+def create_monster(type_id, start_x, start_y):
+	#create a monster from the monster list
+	fighter_component = Fighter(
+		hp=int(monster_list["Monsters"][type_id]["hp"]),
+		defence=int(monster_list["Monsters"][type_id]["defence"]),
+		power=int(monster_list["Monsters"][type_id]["power"]),
+		xp=int(monster_list["Monsters"][type_id]["xp"]),
+		death_function=eval(monster_list["Monsters"][type_id]["death_function"])
+		)
+	
+	mai = monster_list["Monsters"][type_id]["monster_ai"]
+	cr = monster_list["Monsters"][type_id]["chase_range"]
+	cd = monster_list["Monsters"][type_id]["chase_dist"]
+	ai_component = eval(mai+'(chase_range='+str(cr)+',chase_dist='+str(cr)+')')
+
+
+	monster = Object(
+		start_x, 
+		start_y, 
+		str(monster_list["Monsters"][type_id]["char"]), 
+		monster_list["Monsters"][type_id]["name"], 
+		eval('libtcod.' + monster_list["Monsters"][type_id]["color"]), 
+		blocks=True, 
+		fighter=fighter_component, 
+		ai=ai_component
+		)
+	objects.append(monster)
 
 
 
 def place_objects(room):
-	global objects
-
-
-	#this is where we decide the chance of each monster or item appearing.
-	#maximum number of monsters per room
-	max_monsters = from_dungeon_level([[2, 1], [3, 4], [5, 6]])
-
-	#chance of each monster
-	monster_chances = {}
-	monster_chances['orc'] = 80  #orc always shows up, even if all other monsters have 0 chance
-	monster_chances['troll'] = from_dungeon_level([[15, 1], [30, 3], [60, 5]])
-
-	#maximum number of items per room
-	max_items = from_dungeon_level([[2, 1], [4, 4]])
-
-	#chance of each item (by default they have a chance of 0 at level 1, which then goes up)
-	item_chances = {}
-	item_chances['heal'] = 35  #healing potion always shows up, even if all other items have 0 chance
-	item_chances['lightning'] = from_dungeon_level([[25, 1]])
-	item_chances['fireball'] =  from_dungeon_level([[25, 6]])
-	item_chances['confuse'] =   from_dungeon_level([[10, 2]])
-
-
+	global objects, monster_list, monster_chances, max_monsters
+	
 	#choose random number of monsters
 	num_monsters = libtcod.random_get_int(0, 0, max_monsters)
-
-
  
 	for i in range(num_monsters):
 		#choose random spot for this monster
@@ -285,21 +451,19 @@ def place_objects(room):
 
 		#only place it if the tile is not blocked
 		if not gamemap.is_blocked(x, y):
-			choice = random_choice(monster_chances)
-			if choice == 'orc':
-				#create an orc
-				fighter_component = Fighter(hp=20, defense=0, power=4, xp=35, death_function=monster_death)
-				ai_component = BasicMonster()
-				monster = Object(x, y, 'o', 'Orc', libtcod.desaturated_green, blocks=True, fighter=fighter_component, ai=ai_component)
-
-			elif choice == 'troll':
-				#create a troll
-				fighter_component = Fighter(hp=30, defense=2, power=8, xp=100, death_function=monster_death)
-				ai_component = BasicMonster()
-				monster = Object(x, y, 'T', 'troll', libtcod.darker_green, blocks=True, fighter=fighter_component, ai=ai_component)
-
-			objects.append(monster)
+			create_monster(random_choice(monster_chances), x, y)
  
+
+	#maximum number of items per room
+	max_items = from_dungeon_level([[4, 1], [10, 4]])
+
+	#chance of each item (by default they have a chance of 0 at level 1, which then goes up)
+	item_chances = {}
+	item_chances['heal'] = 35  #healing potion always shows up, even if all other items have 0 chance
+	item_chances['lightning'] = from_dungeon_level([[25, 2]])
+	item_chances['fireball'] =  from_dungeon_level([[25, 4]])
+	item_chances['confuse'] =   from_dungeon_level([[10, 3]])
+
 	#choose random number of items
 	num_items = libtcod.random_get_int(0, 0, max_items)
 
@@ -318,17 +482,17 @@ def place_objects(room):
 
 			elif choice == 'lightning':
 				#create a lightning bolt scroll
-				item_component = Item(use_function=gameactions.cast_heal)
+				item_component = Item(use_function=gameactions.cast_lightning)
 				item = Object(x, y, '#', 'Scroll of Lightning Bolt', libtcod.light_yellow, item=item_component)
 
 			elif choice == 'fireball':
 				#create a fireball scroll
-				item_component = Item(use_function=gameactions.cast_heal)
+				item_component = Item(use_function=gameactions.cast_fireball)
 				item = Object(x, y, '#', 'Scroll of Fireball', libtcod.light_yellow, item=item_component)
 
 			elif choice == 'confuse':
 				#create a confuse scroll
-				item_component = Item(use_function=gameactions.cast_heal)
+				item_component = Item(use_function=gameactions.cast_confuse)
 				item = Object(x, y, '#', 'Scroll of Confusion', libtcod.light_yellow, item=item_component)
 
 			objects.append(item)
@@ -343,8 +507,8 @@ def init_objects():
 	global objects, player
 	
 	#create object representing the player
-	fighter_component = Fighter(hp=100, defense=1, power=2, xp=0, death_function=player_death)
+	fighter_component = Fighter(hp=100, defence=1, power=2, xp=0, death_function=player_death)
 	player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component)
-	
+	player.level = 1
 	#the list of objects with those two
 	objects = [player]

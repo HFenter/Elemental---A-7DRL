@@ -24,7 +24,7 @@ INFO_BAR_WIDTH = SCREEN_WIDTH - CAMERA_WIDTH
 
 FOV_ALGO = 2  #default FOV algorithm
 FOV_LIGHT_WALLS = True  #light walls or not
-TORCH_RADIUS = 10
+TORCH_RADIUS = 20
 
 #parameters for dungeon generator
 ROOM_MAX_SIZE = 40
@@ -37,12 +37,14 @@ color_dark_ground = libtcod.Color(50, 50, 150)
 color_light_ground = libtcod.Color(200, 180, 50)
 
 
-
+#experience and level-ups
+LEVEL_UP_BASE = 200
+LEVEL_UP_FACTOR = 150
 
 
 
 def read_config():
-	global SCREEN_WIDTH, SCREEN_HEIGHT, LIMIT_FPS, CUSTOM_FONT, FULLSCREEN
+	global SCREEN_WIDTH, SCREEN_HEIGHT, LIMIT_FPS, CUSTOM_FONT, FULLSCREEN, FONT_GREYSCALE, FONT_LAYOUT
 
 	config = ConfigParser.ConfigParser()
 	config.read('defaults.cfg')
@@ -52,6 +54,8 @@ def read_config():
 	LIMIT_FPS		= config.getint('ScreenSetup', 'LIMIT_FPS')
 	FULLSCREEN		= config.getboolean('ScreenSetup', 'FULLSCREEN')
 	CUSTOM_FONT		= config.get('TileSet', 'CUSTOM_FONT')
+	FONT_GREYSCALE	= config.getboolean('TileSet', 'FONT_GREYSCALE')
+	FONT_LAYOUT		= config.getint('TileSet', 'FONT_LAYOUT')
 
 def write_config():
 	global SCREEN_WIDTH, SCREEN_HEIGHT, LIMIT_FPS, CUSTOM_FONT, FULLSCREEN
@@ -64,6 +68,9 @@ def write_config():
 
 	config.add_section('TileSet')
 	config.set('TileSet', 'CUSTOM_FONT', CUSTOM_FONT)
+	config.set('TileSet', 'FONT_GREYSCALE', FONT_GREYSCALE)
+	config.set('TileSet', 'FONT_LAYOUT', FONT_LAYOUT)
+	
 	# Write the config to a file 
 	with open('defaults.cfg', 'wb') as configfile:
 		config.write(configfile)

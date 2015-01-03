@@ -75,9 +75,10 @@ def create_v_tunnel(y1, y2, x):
  
 def make_map():
     global map, stairs
- 
-    #the list of objects with just the player
-    #objects = [player]
+
+	
+	#load the monsters and items for placing
+    gameobjects.get_monster_types()
  
     #fill map with "blocked" tiles
     map = [[ Tile(True)
@@ -143,7 +144,7 @@ def make_map():
             num_rooms += 1
  
     #create stairs at the center of the last room
-    stairs = gameobjects.Object(new_x, new_y, '<', 'stairs', libtcod.white)
+    stairs = gameobjects.Object(new_x, new_y, '<', 'stairs', libtcod.white, always_visible=True)
     gameobjects.objects.append(stairs)
     #stairs.send_to_back()  #so it's drawn below the monsters
  

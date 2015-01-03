@@ -1,4 +1,6 @@
 import libtcodpy as libtcod
+import time
+
 import config
 
 import gamemap
@@ -47,6 +49,7 @@ def menu(header, options, width):
 
     #present the root console to the player and wait for a key-press
     libtcod.console_flush()
+    time.sleep(.1)
     key = libtcod.console_wait_for_keypress(True)
  
     if key.vk == libtcod.KEY_ENTER and (key.lalt or key.ralt):  #(special case) Alt+Enter: toggle fullscreen
@@ -71,7 +74,7 @@ def inventory_menu(header):
             options.append(text)
  
     index = menu(header, options, (config.CAMERA_WIDTH - 20))
- 
+	
     #if an item was chosen, return it
     if index is None or len(gameobjects.inventory) == 0: return None
     return gameobjects.inventory[index].item
@@ -198,23 +201,60 @@ def render_all():
 	libtcod.console_blit(mes, 0, 0, config.SCREEN_WIDTH, config.MESSAGE_BAR_HEIGHT, 0, 0, (config.SCREEN_HEIGHT - config.MESSAGE_BAR_HEIGHT))
 
 	#########################################
+	# 	World Info Panel					#
+	#########################################
+	libtcod.console_set_default_background(wor, libtcod.black)
+	libtcod.console_clear(wor)
+ 	libtcod.console_set_default_foreground(wor, libtcod.blue)
+	libtcod.console_print_ex(wor, 1, 1, libtcod.BKGND_NONE, libtcod.LEFT, 'World Info')
+
+	#display names of objects under the mouse
+	gameinput.get_names_under_mouse()
+
+	libtcod.console_set_default_foreground(wor, libtcod.dark_amber)
+	libtcod.console_print_ex(wor, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, 'Dungeon Level ' + str(gamemap.dungeon_level))
+	
+	libtcod.console_set_default_foreground(wor, libtcod.white)
+	libtcod.console_print_frame(wor,0, 0, config.INFO_BAR_WIDTH, 8, clear=False)
+	libtcod.console_blit(wor, 0, 0, config.INFO_BAR_WIDTH, 8, 0, config.CAMERA_WIDTH, 0)
+
+	#########################################
 	# 	Elemental Info Panel				#
 	#########################################
 	libtcod.console_set_default_background(elm, libtcod.black)
 	libtcod.console_clear(elm)
  	libtcod.console_set_default_foreground(elm, libtcod.blue)
-	libtcod.console_print_ex(elm, 2, 1, libtcod.BKGND_NONE, libtcod.LEFT, 'Elemental Panel')
+	libtcod.console_print_ex(elm, 1, 1, libtcod.BKGND_NONE, libtcod.LEFT, 'Elemental Panel')
 
 	#show the player's stats
-	render_bar(2, 5, (config.INFO_BAR_WIDTH-4), 'HP', gameobjects.player.fighter.hp, gameobjects.player.fighter.max_hp, libtcod.light_red, libtcod.darker_red, elm)
 
-	#display names of objects under the mouse
-	libtcod.console_set_default_foreground(elm, libtcod.light_gray)
-	libtcod.console_print_ex(elm, 1, 7, libtcod.BKGND_NONE, libtcod.LEFT, gameinput.get_names_under_mouse())
+	objHealth = (float(gameobjects.player.fighter.hp) / float(gameobjects.player.fighter.max_hp))*100
+	if objHealth == 100.0:
+		libtcod.console_print_ex(elm, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, '%cPerfect Health%c'%( libtcod.COLCTRL_1,libtcod.COLCTRL_STOP ))
+	elif objHealth >= 80.0:
+		libtcod.console_print_ex(elm, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, '(%cGood Health%c)'%( libtcod.COLCTRL_2,libtcod.COLCTRL_STOP ))
+	elif objHealth >= 60.0:
+		libtcod.console_print_ex(elm, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, '((%cLightly Hurt%c))'%( libtcod.COLCTRL_3,libtcod.COLCTRL_STOP ))
+	elif objHealth >= 40.0:
+		libtcod.console_print_ex(elm, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, '(((%cBadly Wounded%c)))'%( libtcod.COLCTRL_4,libtcod.COLCTRL_STOP ))
+	elif gameobjects.player.fighter.hp > 0:
+		libtcod.console_print_ex(elm, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, '((((%cAlmost Dead%c))))'%( libtcod.COLCTRL_5,libtcod.COLCTRL_STOP ))
+
+	else:
+		libtcod.console_print_ex(elm, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, 'XXX%cDead%cXXX'%( libtcod.COLCTRL_5,libtcod.COLCTRL_STOP ))
+
+	#render_bar(2, 5, (config.INFO_BAR_WIDTH-4), 'HP', gameobjects.player.fighter.hp, gameobjects.player.fighter.max_hp, libtcod.light_red, libtcod.darker_red, elm)
+
+	libtcod.console_set_default_foreground(elm, libtcod.dark_amber)
+	libtcod.console_print_ex(elm, 2, 6, libtcod.BKGND_NONE, libtcod.LEFT, 'Level ' + str(gameobjects.player.level))
+
+	level_up_xp = config.LEVEL_UP_BASE + gameobjects.player.level * config.LEVEL_UP_FACTOR
+	render_bar(2, 7, (config.INFO_BAR_WIDTH-4), 'XP', gameobjects.player.fighter.xp, level_up_xp, libtcod.light_green, libtcod.darker_green, elm)
+
 	
 	libtcod.console_set_default_foreground(elm, libtcod.white)
-	libtcod.console_print_frame(elm,0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2), clear=False)
-	libtcod.console_blit(elm, 0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2), 0, config.CAMERA_WIDTH, 0)
+	libtcod.console_print_frame(elm,0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4, clear=False)
+	libtcod.console_blit(elm, 0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4, 0, config.CAMERA_WIDTH, 8)
 
 	#########################################
 	# 	Mage Info Panel				#
@@ -225,8 +265,8 @@ def render_all():
 	libtcod.console_print_ex(mag, 2, 2, libtcod.BKGND_NONE, libtcod.LEFT, 'Mage Panel')
 	
 	libtcod.console_set_default_foreground(mag, libtcod.white)
-	libtcod.console_print_frame(mag,0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2), clear=False)
-	libtcod.console_blit(mag, 0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2), 0, config.CAMERA_WIDTH, (config.CAMERA_HEIGHT / 2))
+	libtcod.console_print_frame(mag,0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4, clear=False)
+	libtcod.console_blit(mag, 0, 0, config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4, 0, config.CAMERA_WIDTH, (config.CAMERA_HEIGHT / 2)+4)
 
 
 
@@ -234,18 +274,24 @@ def render_all():
 
 def main_init():
     #initialise main items
-	libtcod.console_set_custom_font(config.CUSTOM_FONT, libtcod.FONT_TYPE_GREYSCALE | libtcod.FONT_LAYOUT_TCOD)
+	if config.FONT_GREYSCALE:
+		libtcod.console_set_custom_font(config.CUSTOM_FONT, 4 | config.FONT_LAYOUT )
+	else:
+		libtcod.console_set_custom_font(config.CUSTOM_FONT, config.FONT_LAYOUT)
+	
+	
 	libtcod.console_init_root(config.SCREEN_WIDTH, config.SCREEN_HEIGHT, 'Elemental', False)
 	libtcod.sys_set_fps(config.LIMIT_FPS)
 	libtcod.console_set_fullscreen(config.FULLSCREEN)
 
 
 def game_screen_init():
-    global con, mes, elm, mag
-    #initialise game screens
-    con = libtcod.console_new(config.MAP_WIDTH, config.MAP_HEIGHT) #main viewport - Top Left
-    mes = libtcod.console_new(config.SCREEN_WIDTH, config.MESSAGE_BAR_HEIGHT) #Message bar - Bottom
-    elm = libtcod.console_new(config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2) ) #Elemental Info (you) - Right Top
-    mag = libtcod.console_new(config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)) #Mage Info - Right Bottom
+	global con, mes, elm, mag, wor
+	#initialise game screens
+	con = libtcod.console_new(config.MAP_WIDTH, config.MAP_HEIGHT) #main viewport - Top Left
+	mes = libtcod.console_new(config.SCREEN_WIDTH, config.MESSAGE_BAR_HEIGHT) #Message bar - Bottom
+	wor = libtcod.console_new(config.INFO_BAR_WIDTH, 8 ) #World Info - Right Top
+	elm = libtcod.console_new(config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4) #Elemental Info (you) - Right Top
+	mag = libtcod.console_new(config.INFO_BAR_WIDTH, (config.CAMERA_HEIGHT / 2)-4) #Mage Info - Right Bottom
 
 

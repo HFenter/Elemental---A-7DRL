@@ -1,0 +1,79 @@
+{
+	"Monsters":[
+		{
+			"name":"Troll",
+			"char":"T",
+			"color":"darker_green",
+			"description":"A big smelly Troll.",
+			"hp":35,
+			"defence":2,
+			"power":8,
+			"xp":100,
+			"death_function":"monster_death",
+			"monster_ai":"ChaseMonster",
+			"chase_range":20,
+			"chase_dist":40,
+			"chance_table": [[15, 2], [30, 3], [60, 5], [0,7]]
+		},
+		{
+			"name":"Orc",
+			"char":"o",
+			"color":"darker_green",
+			"description":"A big smelly Orc.",
+			"hp":25,
+			"defence":1,
+			"power":2,
+			"xp":65,
+			"death_function":"monster_death",
+			"monster_ai":"ChaseMonster",
+			"chase_range":15,
+			"chase_dist":50,
+			"chance_table": [[35, 1], [50, 2], [70, 4], [0, 5]]
+		},
+		{
+			"name":"Goblin",
+			"char":"g",
+			"color":"darker_sepia",
+			"description":"A little tiny goblin.",
+			"hp":10,
+			"defence":0,
+			"power":2,
+			"xp":35,
+			"death_function":"monster_death",
+			"monster_ai":"ChaseMonster",
+			"chase_range":15,
+			"chase_dist":100,
+			"chance_table": [[75, 1], [80, 2], [90, 3], [0, 4]]
+		},
+		{
+			"name":"Kobold",
+			"char":"k",
+			"color":"dark_sepia",
+			"description":"A furry little kobold.",
+			"hp":8,
+			"defence":0,
+			"power":1,
+			"xp":15,
+			"death_function":"monster_death",
+			"monster_ai":"ChaseMonster",
+			"chase_range":5,
+			"chase_dist":40,
+			"chance_table": [[75, 1], [60, 2], [30, 3], [0, 4]]
+		},
+		{
+			"name":"Elephant",
+			"char":"E",
+			"color":"darker_grey",
+			"description":"An Elephant, straight from his stay at BoatMurdered.",
+			"hp":100,
+			"defence":2,
+			"power":10,
+			"xp":350,
+			"death_function":"monster_death",
+			"monster_ai":"ChaseMonster",
+			"chase_range":15,
+			"chase_dist":50,
+			"chance_table": [[5, 1], [7, 2], [9, 4], [12, 5]]
+		}
+	]
+}

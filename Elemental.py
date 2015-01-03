@@ -34,6 +34,8 @@ def game_loop():
 
 		libtcod.console_flush()
 
+		gameobjects.check_level_up()
+
 		#erase all objects at their old locations, before they move
 		for object in gameobjects.objects:
 			object.clear()
@@ -41,6 +43,7 @@ def game_loop():
 		#handle keys and exit game if needed
 		player_action = gameinput.handle_keys()
 		if player_action == 'exit':
+			save_game()
 			break
 		#let monsters take their turn
 		#gamemessages.message('Last State ' + game_state, libtcod.blue)
@@ -48,33 +51,56 @@ def game_loop():
 			for object in gameobjects.objects:
 				if object.ai:
 					object.ai.take_turn()
+			gameinput.path_recalc = False
 
 
 def new_game():
-	global game_state
-
+	
 	gameobjects.init_objects()
-
+	
+	gamemap.dungeon_level = 1
 	#generate map (at this point it's not drawn to the screen)
 	gamemap.make_map()
 
 	gamescreen.initialize_fov()
 
 	gameinput.game_state = 'playing'
+	gameobjects.inventory = []
 
 	#create the list of game messages and their colors, starts empty
 	gamemessages.game_msgs = []
 
 	#a warm welcoming message!
-	gamemessages.message('Welcome stranger! Prepare your butts.', libtcod.red)
-	gamemessages.message('Message 1.', libtcod.red)
-	gamemessages.message('Message 2', libtcod.red)
-	gamemessages.message('Message 3.', libtcod.red)
-	gamemessages.message('Message 4.', libtcod.red)
-	gamemessages.message('Message 5.', libtcod.red)
-	gamemessages.message('Message 6.', libtcod.red)
+	gamemessages.message('Welcome stranger! Prepare your butts.', libtcod.dark_green)
  
+def save_game():
+	#open a new empty shelve (possibly overwriting an old one) to write the game data
+	file = shelve.open('savegame', 'n')
+	file['map'] = gamemap.map
+	file['objects'] = gameobjects.objects
+	file['player_index'] = gameobjects.objects.index(gameobjects.player)  #index of player in objects list
+	file['stairs_index'] = gameobjects.objects.index(gamemap.stairs)  #same for the stairs
+	file['inventory'] = gameobjects.inventory
+	file['game_msgs'] = gamemessages.game_msgs
+	file['game_state'] = gameinput.game_state
+	file['dungeon_level'] = gamemap.dungeon_level
+	file.close()
+ 
+def load_game():
+	#open the previously saved shelve and load the game data
 
+	file = shelve.open('savegame', 'r')
+	gamemap.map = file['map']
+	gameobjects.objects = file['objects']
+	gameobjects.player = gameobjects.objects[file['player_index']]  #get index of player in objects list and access it
+	gamemap.stairs = gameobjects.objects[file['stairs_index']]  #same for the stairs
+	gameobjects.inventory = file['inventory']
+	gamemessages.game_msgs = file['game_msgs']
+	gameinput.game_state = file['game_state']
+	gamemap.dungeon_level = file['dungeon_level']
+	file.close()
+
+	gamescreen.initialize_fov()
 
 def main_menu():
     img = libtcod.image_load('ElementalMenu.png')
