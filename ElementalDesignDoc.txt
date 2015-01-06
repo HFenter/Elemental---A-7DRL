@@ -9,7 +9,9 @@ Design Goals
 5. By tweaking your essence, your basically morphing yourself to one of the typical RPG roles (tank, healer, dps, etc)
 
 Typical RougeLike random dungeon world
-x levels to a final boss level
+(10?) levels to a final boss level
+
+(4 ?) spells per school
 
 
 

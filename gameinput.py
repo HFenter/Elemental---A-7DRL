@@ -16,7 +16,7 @@ path_recalc = True
 def handle_keys():
 	global mouse, key, game_state
 
-	if key.vk == libtcod.KEY_ENTER and libtcod.KEY_ALT:
+	if key.vk == libtcod.KEY_ENTER and (key.lalt or key.ralt):
 		#Alt+Enter: toggle fullscreen
 		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
 
@@ -47,7 +47,7 @@ def handle_keys():
 			#test for other keys
 			key_char = chr(key.c)
 			
-			if key_char == 'g':
+			if key_char == 'g' or key.vk == libtcod.KEY_KP0:
 				#pick up an item
 				grabbed = 0
 				for object in gameobjects.objects:  #look for an item in the player's tile
@@ -69,7 +69,7 @@ def handle_keys():
 				chosen_item = gamescreen.inventory_menu('Press the key next to an item to drop it, or any other to cancel.\n')
 				if chosen_item is not None:
 					chosen_item.drop()
-			if key_char == 'c':
+			if key_char == 'p':
 				#show character information
 				level_up_xp = config.LEVEL_UP_BASE + gameobjects.player.level * config.LEVEL_UP_FACTOR
 				gamescreen.msgbox('Character Information\n\nLevel: ' + str(gameobjects.player.level) + '\nExperience: ' + str(gameobjects.player.fighter.xp) +
@@ -78,14 +78,73 @@ def handle_keys():
 
 			if key_char == '<':
 				#go down stairs, if the player is on them
-				if gamemap.stairs.x == gameobjects.player.x and gamemap.stairs.y == gameobjects.player.y:
-					gameactions.next_level()
+				for stair in gamemap.stairs:
+					if stair.x == gameobjects.player.x and stair.y == gameobjects.player.y:
+						gameactions.next_level()
+			if key_char == '?':
+				gamescreen.help_menu()
+
+			if key_char == 'z':
+				#air ( yellow )
+				#config.color_torch = libtcod.Color(228, 189, 73)
+				#gameobjects.player.color = libtcod.Color(200, 190, 5)
+				gameobjects.player.fighter.add_el_power('air', 1)
+				gameobjects.player.fighter.find_greatest_power()
+			if key_char == 'x':
+				#spirit ( purple )
+				#config.color_torch = libtcod.Color(171, 127, 182)
+				#gameobjects.player.color = libtcod.Color(190, 45, 210)
+				gameobjects.player.fighter.add_el_power('spirit', 1)
+			if key_char == 'c':
+				#water ( blue )
+				#config.color_torch = libtcod.Color(118, 171, 224)
+				#gameobjects.player.color = libtcod.Color(30, 30, 255)
+				gameobjects.player.fighter.add_el_power('water', 1)
+			if key_char == 'v':
+				#fire ( red )
+				#config.color_torch = libtcod.Color(231, 113, 115)
+				#gameobjects.player.color = libtcod.Color(255, 30, 30)
+				gameobjects.player.fighter.add_el_power('fire', 1)
+			if key_char == 'b':
+				#earth ( green )
+				#config.color_torch = libtcod.Color(127, 210, 41)
+				#gameobjects.player.color = libtcod.Color(30, 255, 30)
+				gameobjects.player.fighter.add_el_power('earth', 1)
+			if key_char == 'n':
+				config.color_torch = libtcod.Color(200, 200, 200)
+				gameobjects.player.color = libtcod.Color(250, 250, 250)
+				gameobjects.player.fighter.air = 0
+				gameobjects.player.fighter.spirit = 0
+				gameobjects.player.fighter.water = 0
+				gameobjects.player.fighter.fire = 0
+				gameobjects.player.fighter.earth = 0
+				
+
 			if key_char == '~':
 				#cheat mode!
 				gameobjects.player.fighter.xp = (config.LEVEL_UP_BASE + gameobjects.player.level * config.LEVEL_UP_FACTOR) -1
+				gamemessages.message('You suddenly feel VERY close to leveling... (You Big Cheater)',libtcod.dark_red)
 			if key_char == '*':
 				#cheat mode! confuse
 				gamespells.cast_confuse(power1=10, power2=20, power3=0)
+			if key_char == '/':
+				#cheat mode! superhealth
+				gameobjects.player.fighter.hp=999
+				gameobjects.player.fighter.base_max_hp=999
+				gamemessages.message('You suddenly feel VERY healthy... (You Big Cheater)',libtcod.dark_red)
+			if key_char == '-':
+				#cheat mode! reveal map
+				#every tile gets explored
+				for y in range(config.MAP_HEIGHT):
+					for x in range(config.MAP_WIDTH):
+						gamemap.map[x][y].explored = True
+				for object in gameobjects.objects:
+					if object != gameobjects.player:
+						object.always_visible = True
+						object.location_seen = True
+				#gamemap.map[map_x][map_y].explored = True
+				gamemessages.message('The map suddenly becomes clear... (You Big Cheater)',libtcod.dark_red)
+
 			
 			return 'no-turn'
 
@@ -96,13 +155,6 @@ def get_names_under_mouse():
 	(x, y) = (mouse.cx, mouse.cy)
 	(x, y) = (gamescreen.camera_x + x, gamescreen.camera_y + y)  #from screen to map coordinates
 	print_y = 2
-	libtcod.console_set_color_control(libtcod.COLCTRL_1,libtcod.dark_green,libtcod.black)
-	libtcod.console_set_color_control(libtcod.COLCTRL_2,libtcod.dark_sky,libtcod.black)
-	libtcod.console_set_color_control(libtcod.COLCTRL_3,libtcod.dark_yellow,libtcod.black)
-	libtcod.console_set_color_control(libtcod.COLCTRL_4,libtcod.dark_orange,libtcod.black)
-
-	libtcod.console_set_color_control(libtcod.COLCTRL_5,libtcod.darker_red,libtcod.black)
-	libtcod.console_set_default_foreground(gamescreen.wor, libtcod.light_gray)
 	
 	#create a list with the names of all objects at the mouse's coordinates and in FOV
 	for obj in gameobjects.objects:

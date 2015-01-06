@@ -12,8 +12,8 @@ CUSTOM_FONT = 'arial10x10.png'
 FULLSCREEN = False
 
 #Global Preset Configs
-MAP_WIDTH = 200
-MAP_HEIGHT = 200
+MAP_WIDTH = 100
+MAP_HEIGHT = 100
 
 CAMERA_WIDTH = 70
 CAMERA_HEIGHT = 50
@@ -24,22 +24,46 @@ INFO_BAR_WIDTH = SCREEN_WIDTH - CAMERA_WIDTH
 
 FOV_ALGO = 2  #default FOV algorithm
 FOV_LIGHT_WALLS = True  #light walls or not
-TORCH_RADIUS = 20
+TORCH_RADIUS = 10
 
 #parameters for dungeon generator
 ROOM_MAX_SIZE = 40
 ROOM_MIN_SIZE = 6
 MAX_ROOMS = 30
 
-color_dark_wall = libtcod.Color(0, 0, 100)
+color_dark_wall = libtcod.Color(5, 5, 30)
 color_light_wall = libtcod.Color(130, 110, 50)
-color_dark_ground = libtcod.Color(50, 50, 150)
-color_light_ground = libtcod.Color(200, 180, 50)
+color_dark_ground = libtcod.Color(17, 6, 1)
+color_light_ground = libtcod.Color(187, 167, 146)
 
+#color_torch = libtcod.Color(200, 200, 200)
+
+color_nutr_lt = libtcod.Color(200, 200, 200)
+color_nutr_cr = libtcod.Color(250, 250, 250)
+
+color_air_lt = libtcod.Color(228, 189, 73)
+color_air_cr = libtcod.Color(200, 190, 5)
+
+color_spirit_lt = libtcod.Color(171, 127, 182)
+color_spirit_cr = libtcod.Color(190, 45, 210)
+
+color_water_lt = libtcod.Color(118, 171, 224)
+color_water_cr = libtcod.Color(30, 30, 255)
+
+color_fire_lt = libtcod.Color(231, 113, 115)
+color_fire_cr = libtcod.Color(255, 30, 30)
+
+color_earth_lt = libtcod.Color(127, 210, 41)
+color_earth_cr = libtcod.Color(30, 255, 30)
+
+color_torch = color_nutr_lt
 
 #experience and level-ups
 LEVEL_UP_BASE = 200
 LEVEL_UP_FACTOR = 150
+
+
+DEBUG_MODE = True
 
 
 

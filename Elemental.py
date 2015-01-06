@@ -1,4 +1,5 @@
 import libtcodpy as libtcod
+import time
 import math
 import textwrap
 import shelve
@@ -60,7 +61,8 @@ def new_game():
 	
 	gamemap.dungeon_level = 1
 	#generate map (at this point it's not drawn to the screen)
-	gamemap.make_map()
+	#gamemap.make_map()
+	gamemap.make_bsp_map()
 
 	gamescreen.initialize_fov()
 
@@ -79,7 +81,11 @@ def save_game():
 	file['map'] = gamemap.map
 	file['objects'] = gameobjects.objects
 	file['player_index'] = gameobjects.objects.index(gameobjects.player)  #index of player in objects list
-	file['stairs_index'] = gameobjects.objects.index(gamemap.stairs)  #same for the stairs
+	stair_index = []
+	for stair in gamemap.stairs:
+		stair_index.append(gameobjects.objects.index(stair))
+	file['stair_index'] = stair_index
+	#same for the stairs
 	file['inventory'] = gameobjects.inventory
 	file['game_msgs'] = gamemessages.game_msgs
 	file['game_state'] = gameinput.game_state
@@ -88,15 +94,23 @@ def save_game():
  
 def load_game():
 	#open the previously saved shelve and load the game data
-
 	file = shelve.open('savegame', 'r')
+	print 'Loading Game:'
+	gamemap.stairs = []
 	gamemap.map = file['map']
+	print '  Map Loaded'
 	gameobjects.objects = file['objects']
 	for object in gameobjects.objects:
 		if object.ai and isinstance(object.ai, gameobjects.ChaseMonster):
 			object.ai.path = None
-	gameobjects.player = gameobjects.objects[file['player_index']]  #get index of player in objects list and access it
-	gamemap.stairs = gameobjects.objects[file['stairs_index']]  #same for the stairs
+	gameobjects.player = gameobjects.objects[file['player_index']]  
+	print '  Objects Loaded'
+	stair_index = file['stair_index']
+	print '  Loading Stairs'
+	for stair in stair_index:
+		gamemap.stairs.append(gameobjects.objects[stair])
+		print '    Loaded Stairs: '+ str(gameobjects.objects[stair].x) + ':'+str(gameobjects.objects[stair].y)
+
 	gameobjects.inventory = file['inventory']
 	gamemessages.game_msgs = file['game_msgs']
 	gameinput.game_state = file['game_state']
@@ -104,6 +118,37 @@ def load_game():
 	file.close()
 
 	gamescreen.initialize_fov()
+
+
+def welcome_screen(next=1):
+	img = libtcod.image_load('ElementalMenu2.png')
+
+	while not libtcod.console_is_window_closed():
+		#show the background image, at twice the regular console resolution
+		libtcod.image_blit_2x(img, 0, 0, 0)
+
+
+		welcome_text = """You have been summoned to do some stuff...  this is greeking text though.  we dont have a story yet \
+jibble nibble bibble jibble nibble bibblejibble nibble bibblejibble nibble bibble
+jibble nibble bibble jibble nibble bibble jibble nibble bibble
+jibble nibble bibble jibble nibble bibble jibble nibble bibble"""
+
+		
+		#show the game's title, and some credits!
+		libtcod.console_set_default_foreground(0, libtcod.lighter_blue)
+		libtcod.console_print_ex(0, 60, 20, libtcod.BKGND_NONE, libtcod.LEFT, 'Welcome Elemental....')
+		text_height = libtcod.console_get_height_rect(0, 1, 1, config.SCREEN_WIDTH-60-2, config.SCREEN_HEIGHT-22, welcome_text)
+		
+		libtcod.console_print_rect_ex(0, 60, 22, config.SCREEN_WIDTH-60-2, text_height, libtcod.BKGND_NONE, libtcod.LEFT, welcome_text)
+
+		#present the root console to the player and wait for a key-press
+		libtcod.console_flush()
+		time.sleep(.1)
+		key = libtcod.console_wait_for_keypress(True)
+		return None
+			
+	 
+		
 
 def main_menu():
     img = libtcod.image_load('ElementalMenu.png')
@@ -120,6 +165,7 @@ def main_menu():
         choice = gamescreen.menu('', ['Play a new game', 'Continue last game', 'Quit'], 24)
         if choice == 0:  #new game
             new_game()
+            welcome_screen()
             game_loop()
         if choice == 1:  #load last game
             try:
@@ -127,6 +173,7 @@ def main_menu():
             except:
                 gamescreen.msgbox('\n No saved game to load.\n', 34)
                 continue
+            welcome_screen()
             game_loop()
         elif choice == 2:  #quit
             break  
@@ -139,7 +186,7 @@ def main_menu():
 gamescreen.main_init()
 gamescreen.game_screen_init()
 
- 
+#libtcod.console_credits()
 
 
 

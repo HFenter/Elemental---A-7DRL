@@ -13,6 +13,8 @@ import gameactions
 import gamespells
 
 inventory = []
+numMonsters = 0
+numItems = 0
 
 class Object:
 	#this is a generic object: the player, a monster, an item, the stairs...
@@ -21,6 +23,8 @@ class Object:
 		self.x = x
 		self.y = y
 		self.char = char
+		if isinstance( self.char, int ) or len(self.char)>1:
+			self.char = int(self.char)
 		self.name = name
 		self.color = color
 		self.blocks = blocks
@@ -138,23 +142,228 @@ class Item:
         if self.use_function is None:
             gamemessages.message('The ' + self.owner.name + ' cannot be used.')
         else:
-            if self.use_function(self.power1) != 'cancelled':
+            if self.use_function(self.power1, self.power2, self.power3) != 'cancelled':
                 inventory.remove(self.owner)  #destroy after use, unless it was cancelled for some reason
  
 
+# The player basically
+class Elemental:
+	def __init__(self, hp, mana, defence, power, xp, death_function=None):
+		self.base_max_hp = hp
+		self.hp = hp
+		self.base_max_mana = mana
+		self.mana = mana
+		self.base_defence = defence
+		self.base_power = power
+		self.xp = xp
+		self.death_function = death_function
+
+		self.air = 0
+		self.spirit = 0
+		self.water = 0
+		self.fire = 0
+		self.earth = 0
+
+	@property
+	def el_power(self):  #return total power of all schools
+		elp = self.air + self.spirit + self.water + self.fire + self.earth
+		if elp == 0:
+			elp =1
+		return elp
+
+	@property
+	def power(self):  #return actual power, by summing up the bonuses from all bonus effects
+		bonus = 0#sum(equipment.power_bonus for equipment in get_all_equipped(self.owner))
+		return self.base_power + bonus
+
+	@property
+	def defence(self):  #return actual defence, by summing up the bonuses from all bonus effects
+		bonus = 0#sum(equipment.defence_bonus for equipment in get_all_equipped(self.owner))
+		return self.base_defence + bonus
+
+	@property
+	def max_hp(self):  #return actual max_hp, by summing up the bonuses from all bonus effects
+		bonus = 0#sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
+		return self.base_max_hp + bonus
+	@property
+	def max_mana(self):  #return actual max_hp, by summing up the bonuses from all bonus effects
+		bonus = 0#sum(equipment.max_hp_bonus for equipment in get_all_equipped(self.owner))
+		return self.base_max_mana + bonus
+
+	@property
+	def dice(self):  #dice, based on 3 + level bonus
+		bonus = math.ceil(self.owner.level /3)
+		return int(3 + bonus)
+	
+	def find_greatest_power(self):
+		lst = [self.air, self.spirit, self.water, self.fire,  self.earth]
+		id = max((x,i) for i,x in enumerate(lst))[1]
+		sm = 0
+		for vl in lst:
+			if vl == lst[id]:
+				sm += 1
+		if sm > 1:
+			return 'nutr'
+		elif id == 0:
+			return 'air'
+		elif id == 1:
+			return 'spirit'
+		elif id == 2:
+			return 'water'
+		elif id == 3:
+			return 'fire'
+		elif id == 4:
+			return 'earth'
+		else:
+			return 'nutr'
+
+	def add_el_power(self, pwr, amt):
+		if pwr == 'air':
+			self.air += amt
+			gamemessages.message('You feel more in tune with the Realm of Air.', config.color_air_cr)
+		elif pwr == 'spirit':
+			self.spirit += amt
+			gamemessages.message('You feel more in tune with the Realm of Spirit.', config.color_spirit_cr)
+		elif pwr == 'water':
+			self.water += amt
+			gamemessages.message('You feel more in tune with the Realm of Water.', config.color_water_cr)
+		elif pwr == 'fire':
+			self.fire += amt
+			gamemessages.message('You feel more in tune with the Realm of Fire.', config.color_fire_cr)
+		elif pwr == 'earth':
+			self.earth += amt
+			gamemessages.message('You feel more in tune with the Realm of Earth.', config.color_earth_cr)
+
+	def place_star(self):
+		
+		#find center
+		#star cords 16,5 - 40,29
+		# width = 25, height = 25
+		tot = float(self.el_power)
+		if tot < 100.0:
+			tot = 100.0
+		step = 12.0 / tot
+		#print str(step)
+		center_x = 13.0
+		center_y = 13.0
+		
+		#air - up / left
+		center_x = center_x - (self.air * step)
+		center_y = center_y - (self.air * step)
+
+		#spirit - up / right
+		center_x = center_x + (self.spirit * step)
+		center_y = center_y - (self.spirit * step)
+		
+		#water - down/2 / right
+		center_x = center_x + (self.water * step)
+		center_y = center_y + ((self.water * step)/2)
+		#fire - down
+		#center_x = center_x + (self.water * step)
+		center_y = center_y + (self.fire * step)
+		#earth - down/2 / left
+		center_x = center_x - (self.earth * step)
+		center_y = center_y + ((self.earth * step)/2)
+		center_x = int(round(center_x, 0))+15
+		center_y = int(round(center_y, 0))+4
+
+		#print str(center_x)
+		#print str(center_y)
+
+		color = self.find_greatest_power()
+		#print str(eval('config.color_'+color+'_cr'))
+
+		libtcod.console_set_default_foreground(gamescreen.elm, eval('config.color_'+color+'_cr'))
+		libtcod.console_put_char(gamescreen.elm, center_x, center_y-1, 1, libtcod.BKGND_NONE)
+		libtcod.console_put_char(gamescreen.elm, center_x-1, center_y, 1, libtcod.BKGND_NONE)
+		libtcod.console_put_char(gamescreen.elm, center_x, center_y, 1, libtcod.BKGND_NONE)
+		libtcod.console_put_char(gamescreen.elm, center_x+1, center_y, 1, libtcod.BKGND_NONE)
+		libtcod.console_put_char(gamescreen.elm, center_x, center_y+1, 1, libtcod.BKGND_NONE)
+
+	def attack(self, target):
+		
+		# attack using the strongest school of power
+		
+		#base damage
+		dmg_mult = libtcod.random_get_int(0, 0, (self.dice*100))
+		dmg = math.floor( (self.power * dmg_mult)/100)
+
+		#base enemy defence 
+		den_mult = libtcod.random_get_int(0, 0, (target.fighter.dice*100))
+		den = math.floor( (target.fighter.defence * den_mult)/100)
+	
+		#elemental attack/defence
+		eldmg = 0
+		pwrtype = self.find_greatest_power()
+		if pwrtype is not 'nutr':
+			print '  Target Defenses:'
+			print '    Air:'+str(target.fighter.res_air)+'  Spirit:'+str(target.fighter.res_spirit)+'  Water:'+str(target.fighter.res_water)+'  Fire:'+str(target.fighter.res_fire)+'  Earth:'+str(target.fighter.res_earth)
+			defpw = eval('target.fighter.res_'+pwrtype)
+			atpw = round(((eval('self.'+pwrtype)+25.0)/25),0)
+			eldmg = atpw - defpw
+			if eldmg > 20:
+				eldmg = 20
+			if eldmg < 0:
+				eldmg =0
+			eldmg = math.floor( (eldmg * dmg_mult)/100)
+			print '    Attack Power: '+str(atpw)+'\n    Def Power: '+str(defpw)+'\n    Dice Roll: '+str(dmg_mult)+'\n    Extra Attack: '+str(eldmg)
+			
+		
+
+		
 
 
+		damage = int(dmg - den + eldmg)
+
+		if damage > 0:
+			#make the target take some damage
+			gamemessages.message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
+			target.fighter.take_damage(damage)
+		else:
+			gamemessages.message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
+
+	def take_damage(self, damage):
+		#apply damage if possible
+		if damage > 0:
+			self.hp -= damage
+
+		#check for death. if there's a death function, call it
+		if self.hp <= 0:
+			function = self.death_function
+			if function is not None:
+				function(self.owner)
+
+			if self.owner != player:  #yield experience to the player
+				player.fighter.xp += self.xp
+
+	def heal(self, amount):
+		#heal by the given amount, without going over the maximum
+		self.hp += amount
+		if self.hp > self.max_hp:
+			self.hp = self.max_hp
+	def heal_mana(self, amount):
+		#heal by the given amount, without going over the maximum
+		self.mana += amount
+		if self.mana > self.max_mana:
+			self.mana = self.max_mana
 
 
-class Fighter:
+class MonsterFighter:
 	#combat-related properties and methods (monster, player, NPC).
-	def __init__(self, hp, defence, power, xp, death_function=None):
+	def __init__(self, hp, defence, power, xp, dice=4, death_function=None, essence=1, res_air=0, res_spirit=0, res_water=0, res_fire=0, res_earth=0):
 		self.base_max_hp = hp
 		self.hp = hp
 		self.base_defence = defence
 		self.base_power = power
 		self.xp = xp
+		self.dice = dice
+		self.essence = essence
 		self.death_function = death_function
+		self.res_air=res_air
+		self.res_spirit=res_spirit
+		self.res_water=res_water
+		self.res_fire=res_fire
+		self.res_earth=res_earth
 
 	@property
 	def power(self):  #return actual power, by summing up the bonuses from all equipped items
@@ -174,19 +383,19 @@ class Fighter:
 	def attack(self, target):
 		#a simple formula for attack damage
 
-		dmg_mult = libtcod.random_get_int(0, 0, 600)
+		dmg_mult = libtcod.random_get_int(0, 0, (self.dice*100))
 		dmg = math.floor( (self.power * dmg_mult)/100)
-		den_mult = libtcod.random_get_int(0, 0, 600)
+		den_mult = libtcod.random_get_int(0, 0, (target.fighter.dice*100))
 		den = math.floor( (target.fighter.defence * den_mult)/100)
 
 		damage = int(dmg - den)
 
 		if damage > 0:
 			#make the target take some damage
-			gamemessages.message(self.owner.name.capitalize() + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
+			gamemessages.message(self.owner.name + ' attacks ' + target.name + ' for ' + str(damage) + ' hit points.')
 			target.fighter.take_damage(damage)
 		else:
-			gamemessages.message(self.owner.name.capitalize() + ' attacks ' + target.name + ' but it has no effect!')
+			gamemessages.message(self.owner.name + ' attacks ' + target.name + ' but it has no effect!')
 
 	def take_damage(self, damage):
 		#apply damage if possible
@@ -326,23 +535,22 @@ def check_level_up():
         #it is! level up and ask to raise some stats
         player.level += 1
         player.fighter.xp -= level_up_xp
-        gamemessages.message('Your battle skills grow stronger! You reached level ' + str(player.level) + '!', libtcod.yellow)
+        gamemessages.message('Your connection with this Realm grows stronger! You reached level ' + str(player.level) + '!', libtcod.yellow)
  
         choice = None
         while choice == None:  #keep asking until a choice is made
-            choice = gamescreen.menu('Level up! Choose a stat to raise:\n',
-                          ['Constitution (+20 HP, from ' + str(player.fighter.max_hp) + ')',
-                           'Strength (+1 attack, from ' + str(player.fighter.power) + ')',
-                           'Agility (+1 defence, from ' + str(player.fighter.defence) + ')'], 40)
+            choice = gamescreen.menu('Level up! Choose a Plannar Realm Connection to Strengthen:\n',
+                          ['Physical Connetion (+20 HP, from ' + str(player.fighter.max_hp) + ')',
+                           'Mental Connection (+20 Mana, from ' + str(player.fighter.max_mana) + ')'], 50)
  
         if choice == 0:
             player.fighter.base_max_hp += 20
             player.fighter.hp += 20
         elif choice == 1:
-            player.fighter.base_power += 1
-        elif choice == 2:
-            player.fighter.base_defence += 1
+            player.fighter.base_max_mana += 20
+            player.fighter.mana += 20
         player.fighter.heal(35)
+        player.fighter.heal_mana(35)
 
 
 def player_death(player):
@@ -358,13 +566,17 @@ def player_death(player):
 def monster_death(monster):
     #transform it into a nasty corpse! it doesn't block, can't be
     #attacked and doesn't move
-    gamemessages.message('The ' + monster.name + ' is dead! You gain ' + str(monster.fighter.xp) + ' experience points.', libtcod.orange)
+    gamemessages.message('The ' + monster.name + ' is dead! You feel as though you understand combat in this plane of existance a little better.', libtcod.orange)
+    create_el_essence(monster.fighter.essence, monster.x, monster.y)
     monster.char = '%'
     monster.color = libtcod.dark_red
     monster.blocks = False
     monster.fighter = None
     monster.always_visible = True
-    #monster.location_seen = True
+
+	#drop an elemental shard
+    gamemessages.message('The ' + monster.name + '\'s elemental essence has dropped to the ground.', libtcod.dark_orange)
+    
     monster.ai = None
     monster.name = 'Remains of ' + monster.name
     monster.send_to_back()
@@ -419,7 +631,7 @@ def get_monster_types():
 	global monster_list, monster_chances, max_monsters
 	monster_chances = {}
 	#maximum number of monsters per room
-	max_monsters = from_dungeon_level([[5, 1], [2, 2], [3, 4], [5, 6]])
+	max_monsters = from_dungeon_level([[2, 1], [3, 4], [5, 6]])
 	
 	json_data=open('data/monsters.json')
 	monster_list = json.load(json_data)
@@ -431,13 +643,20 @@ def get_monster_types():
 
 def create_monster(type_id, start_x, start_y):
 	#create a monster from the monster list
-	global monster_list
-	fighter_component = Fighter(
+	global monster_list, numMonsters
+	fighter_component = MonsterFighter(
 		hp=int(monster_list["Monsters"][type_id]["hp"]),
 		defence=int(monster_list["Monsters"][type_id]["defence"]),
 		power=int(monster_list["Monsters"][type_id]["power"]),
 		xp=int(monster_list["Monsters"][type_id]["xp"]),
-		death_function=eval(monster_list["Monsters"][type_id]["death_function"])
+		dice = int(monster_list["Monsters"][type_id]["dice"]),
+		death_function=eval(monster_list["Monsters"][type_id]["death_function"]), 
+		essence=int(monster_list["Monsters"][type_id]["essence"]),
+		res_air=int(monster_list["Monsters"][type_id]["res_air"]),
+		res_spirit=int(monster_list["Monsters"][type_id]["res_spirit"]),
+		res_water=int(monster_list["Monsters"][type_id]["res_water"]),
+		res_fire=int(monster_list["Monsters"][type_id]["res_fire"]),
+		res_earth=int(monster_list["Monsters"][type_id]["res_earth"])
 		)
 	
 	mai = monster_list["Monsters"][type_id]["monster_ai"]
@@ -457,13 +676,14 @@ def create_monster(type_id, start_x, start_y):
 		ai=ai_component
 		)
 	objects.append(monster)
+	numMonsters += 1
 
 
 def get_item_types():
 	global item_list, item_chances, max_items
 	item_chances = {}
 	#maximum number of item per room
-	max_items = from_dungeon_level([[5, 1], [2, 2], [3, 4], [5, 6]])
+	max_items = from_dungeon_level([[1, 1], [2, 4], [4, 6]])
 	
 	json_data=open('data/items.json')
 	item_list = json.load(json_data)
@@ -472,10 +692,50 @@ def get_item_types():
 		print "Loading Items: " + str(idx) + " " + item["name"]
 		item_chances[idx] = from_dungeon_level(item["chance_table"])
 
+def create_el_essence(str, start_x, start_y):
+	#create an essence item
+	global item_list
+	if str == 1:
+		name = 'Weak Essence'
+		color = libtcod.Color(60, 80, 60)
+	elif str == 2:
+		name = 'Small Essence'
+		color = libtcod.Color(50, 80, 50)
+	elif str == 3:
+		name = 'Medium Essence'
+		color = libtcod.Color(40, 80, 40)
+	elif str == 4:
+		name = 'Strong Essence'
+		color = libtcod.Color(30, 80, 30)
+	elif str >= 5:
+		name = 'Godly Essence'
+		color = libtcod.Color(20, 80, 20)
+
+	item_component = Item(
+		use_function=gameactions.addEssence,
+		power1 = str,
+		power2 = 0,
+		power3 = 0	
+		)
+	item = Object(
+		start_x, 
+		start_y, 
+		int(127), 
+		name, 
+		color, 
+		item=item_component
+		)
+
+	objects.append(item)
+	item.send_to_back()  #items appear below other objects
+	item.always_visible = True  #items are visible even out-of-FOV, if in an explored area
+
+
+
 
 def create_item(type_id, start_x, start_y):
 	#create an item from the item list
-	global item_list
+	global item_list, numItems
 	item_component = Item(
 		use_function=eval(item_list["Items"][type_id]["use_function"]),
 		power1 = item_list["Items"][type_id]["power1"],
@@ -494,6 +754,7 @@ def create_item(type_id, start_x, start_y):
 	objects.append(item)
 	item.send_to_back()  #items appear below other objects
 	item.always_visible = True  #items are visible even out-of-FOV, if in an explored area
+	numItems += 1
 
 
 
@@ -514,7 +775,9 @@ def place_objects(room):
 			create_monster(random_choice(monster_chances), x, y)
  
 	#choose random number of items
-	num_items = libtcod.random_get_int(0, 0, max_items)
+	#num_items = libtcod.random_get_int(0, 0, max_items)
+	#disabled items for now
+	num_items = 0
 
 	for i in range(num_items):
 		#choose random spot for this item
@@ -533,8 +796,8 @@ def init_objects():
 	global objects, player
 	
 	#create object representing the player
-	fighter_component = Fighter(hp=100, defence=1, power=2, xp=0, death_function=player_death)
-	player = Object(0, 0, '@', 'player', libtcod.white, blocks=True, fighter=fighter_component)
+	fighter_component = Elemental(hp=100, mana=100, defence=1, power=2, xp=0, death_function=player_death)
+	player = Object(0, 0, '@', 'player', libtcod.dark_blue, blocks=True, fighter=fighter_component)
 	player.level = 1
 	#the list of objects with those two
 	objects = [player]

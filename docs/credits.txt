@@ -1,0 +1,14 @@
+CREDITS
+-------
+
+This game was made as a Seven Day Rougelike, to test myself before the 2015 competition. In the 7DRL you have to make a complete roguelike game in just 7 seven days! 
+
+It was made by Delvair.  He makes games and stuff.
+
+Like this game a lot?  Donate a few satoshis at Bitcoin: 1A3y1xDXtyZySmPZySbpz7PPog4Vsyqig1
+
+The game runs on python, and uses the libtcod library by Doryen.
+The game borrows heavily from the libtcod roguelike tutorial written by Jotaf.
+(http://www.roguebasin.com/index.php?title=Complete_Roguelike_Tutorial,_using_python%2Blibtcod)
+
+If you want to talk to me about the game, email howard@rovingsquid.com!

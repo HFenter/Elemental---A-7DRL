@@ -2,7 +2,7 @@
 	"Items":[
 		{
 			"name":"Small Healing Potion",
-			"char":"!",
+			"char":173,
 			"color":"light_violet",
 			"description":"A small healing potion.",
 			"power1":35,
@@ -14,7 +14,7 @@
 		},
 		{
 			"name":"Medium Healing Potion",
-			"char":"!",
+			"char":173,
 			"color":"light_violet",
 			"description":"A medium healing potion.",
 			"power1":65,
@@ -26,7 +26,7 @@
 		},
 		{
 			"name":"Scroll of Lightning Bolt",
-			"char":"#",
+			"char":172,
 			"color":"light_yellow",
 			"description":"A scroll of lightning.",
 			"power1":40,
@@ -38,7 +38,7 @@
 		},
 		{
 			"name":"Scroll of Fireball",
-			"char":"#",
+			"char":172,
 			"color":"dark_orange",
 			"description":"A scroll of fireball.",
 			"power1":30,
@@ -50,7 +50,7 @@
 		},
 		{
 			"name":"Scroll of Confusion",
-			"char":"#",
+			"char":172,
 			"color":"light_cyan",
 			"description":"A scroll of confusion.",
 			"power1":4,

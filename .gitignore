@@ -216,5 +216,5 @@ pip-log.txt
 .mr.developer.cfg
 savegame
 *.psd
-raw/ElementalPenta.jpg
-savegame
+raw/
+fonts/raw/
