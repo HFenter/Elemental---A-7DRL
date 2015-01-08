@@ -5,6 +5,8 @@ This game was made as a Seven Day Rougelike, to test myself before the 2015 comp
 
 It was made by Delvair.  He makes games and stuff.
 
+The tileset and other graphics were made by Starr.  Aren't they pretty?
+
 Like this game a lot?  Donate a few satoshis at Bitcoin: 1A3y1xDXtyZySmPZySbpz7PPog4Vsyqig1
 
 The game runs on python, and uses the libtcod library by Doryen.

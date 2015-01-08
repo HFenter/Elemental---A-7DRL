@@ -11,12 +11,25 @@ Numpad keys:
  /|\
 1 2 3
 
+Cast Spells
+------------
+
+Z - Air School Spell
+X - Spirit School Spell
+C - Water School Spell
+V - Fire School Spell
+B - Earth School Spell
+
 ADDITIONAL KEYS
 ---------------
 Picking up items: 'g' or numpad 0
 Inventory: 'i'
 Drop item: 'd'
-Descend stairs: '<'
-Character stats: 'c'
+Save and Quit: Escape
 Toggle fullscreen: alt + enter
 This help menu: '?'
+Debug / Cheat Mode: ~
+  Cheat Free Xp: /
+  Cheat Superhealth: *
+  Cheat Reveal Map: -
+  Cheat Add Elemental Power: 1 - 5

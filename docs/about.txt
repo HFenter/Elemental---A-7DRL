@@ -1,8 +1,16 @@
 ABOUT ELEMENTAL
 -------------------
 
-About text greeking...  story should go here.
+You are a young elemental.
 
-Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+Up to this point you have led a simple, uninteresting life. One day, while going about your business, you see a strange light surround you.  
 
-It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).
+Suddenly your vision goes blurry, and you feel yourself being pulled through some kind of portal.  As your vision clears, you quickly realize you aren't at home any more.  
+
+Far from it, you're in a strange new Realm, completely unlike anything you've ever seen before.  Looking around, you see what appears to be a small meaty creature next to you, wearing what appears to be a funny hat.  As the meaty little creature in the hat looks back at you, you can suddenly hear a booming voice in your head:
+
+"Elemental, I am a great Wizard! I have summoned you to the Physical Realm to serve me in my quest for the mighty Staff of GOOLWOLOD!
+
+You have one task in this realm, keep me alive!"
+
+Looking at this little meatbag, you're not sure why you should serve them, but something you can't explain compels you to do as they says.  Looks like this is going to be a fun day...
