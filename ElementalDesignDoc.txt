@@ -27,3 +27,5 @@ Current To-Dos
 * Make AI run when hurt
 * Make AI thats returning home still notice player if something drastic has changed (they stumble near them durring the trek home for instance)
 
+Broken Things
+

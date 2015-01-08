@@ -47,7 +47,7 @@
 		{
 			"name":"Goblin",
 			"char":"g",
-			"color":"darker_sepia",
+			"color":"dark_green",
 			"description":"A little tiny goblin.",
 			"hp":10,
 			"defence":0,
@@ -62,7 +62,7 @@
 			"res_air":0,
 			"res_spirit":1,
 			"res_water":0,
-			"res_fire":0,
+			"res_fire":2,
 			"res_earth":0,
 			"chance_table": [[75, 1], [80, 2], [90, 3], [0, 4]]
 		},
@@ -84,7 +84,7 @@
 			"res_air":0,
 			"res_spirit":1,
 			"res_water":0,
-			"res_fire":0,
+			"res_fire":4,
 			"res_earth":0,
 			"chance_table": [[75, 1], [60, 2], [30, 3], [0, 4]]
 		},

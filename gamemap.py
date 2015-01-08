@@ -8,6 +8,7 @@ dungeon_level = 1
 numRooms = 0
 
 stairs = []
+bsp = None
 
 class Tile:
 	#a tile of the map and its properties
@@ -26,7 +27,7 @@ class Tile:
 			self.tile = 3#'#'
 
 		# random tile color
-		brt = libtcod.random_get_int(0, 150, 180)
+		brt = libtcod.random_get_int(0, 120, 180)
 		self.color = libtcod.Color(brt,brt,brt)
 		#self.color = libtcod.Color(180, 180, 180)
 			
@@ -320,11 +321,11 @@ def traverse_node(node, dat):
 				#random floor tile
 
 				rnfl = libtcod.random_get_int(0, 0, 100)
-				if rnfl <= 94:
+				if rnfl <= 90:
 					map[x][y].tile = 5
-				elif rnfl <= 96:
+				elif rnfl <= 92:
 					map[x][y].tile = 6
-				elif rnfl <= 98:
+				elif rnfl <= 97:
 					map[x][y].tile = 7
 				else:
 					map[x][y].tile = 8
@@ -337,9 +338,18 @@ def traverse_node(node, dat):
         if gameobjects.player.x == 0:
             new_x = libtcod.random_get_int(0, minx, maxx)
             new_y = libtcod.random_get_int(0, miny, maxy)
-            print 'placing player at: ' +str(new_x) + ' , '+str(new_x)
-            gameobjects.player.x = libtcod.random_get_int(0, minx, maxx)
-            gameobjects.player.y = libtcod.random_get_int(0, miny, maxy)
+            print '  Placing Player at: ' +str(new_x) + ' , '+str(new_x)
+            gameobjects.player.x = new_x
+            gameobjects.player.y = new_y
+            #place the mage nearby
+            new_x = libtcod.random_get_int(0, minx, maxx)
+            new_y = libtcod.random_get_int(0, miny, maxy)
+            while is_blocked(new_x, new_y):
+                new_x = libtcod.random_get_int(0, minx, maxx)
+                new_y = libtcod.random_get_int(0, miny, maxy)
+            print '  Placing Mage at: ' +str(new_x) + ' , '+str(new_x)
+            gameobjects.mage.x = new_x
+            gameobjects.mage.y = new_y
 
     else:
         # resize the node to fit its sons

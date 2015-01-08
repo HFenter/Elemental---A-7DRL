@@ -128,24 +128,71 @@ def menu(header, options, width):
     if index >= 0 and index < len(options): return index
     return None
 
+def menu_confirm(text, width=35):
+    #special Menu to choose an elemental school
+	#width = 35
+	height = 8
+	#create an off-screen console that represents the menu's window
+	window = libtcod.console_new(width, height)
+
+	#print the header, with auto-wrap
+	libtcod.console_set_default_foreground(window, config.color_nutr_cr)
+	libtcod.console_print_rect_ex(window, 17, 1, width, height, libtcod.BKGND_NONE, libtcod.CENTER, text )
+	
+	libtcod.console_set_default_foreground(window, libtcod.dark_green)
+	libtcod.console_print_ex(window, 17, 4, libtcod.BKGND_NONE, libtcod.CENTER, 'Press Y to Confirm')
+	libtcod.console_set_default_foreground(window, libtcod.dark_red)
+	libtcod.console_print_ex(window, 17, 6, libtcod.BKGND_NONE, libtcod.CENTER, 'Press Any Other Key To Cancel')
+	
+	#blit the contents of "window" to the root console
+	x = config.SCREEN_WIDTH/2 - width/2
+	y = config.SCREEN_HEIGHT/2 - height/2 - 15
+	libtcod.console_print_frame(window,0, 0, width, height, clear=False)
+	libtcod.console_blit(window, 0, 0, width, height, 0, x, y, 1.0, 0.95)
+ 
+    
+
+	#present the root console to the player and wait for a key-press
+	libtcod.console_flush()
+	time.sleep(.25)
+	key = libtcod.console_wait_for_keypress(True)
+
+	if key.vk == libtcod.KEY_ENTER and (key.lalt or key.ralt):
+	#Alt+Enter: toggle fullscreen
+		libtcod.console_set_fullscreen(not libtcod.console_is_fullscreen())
+
+	#convert the ASCII code to an index; if it corresponds to an option, return it
+	key_char = chr(key.c)
+	if key_char.lower() == 'y':
+		return 1
+	else:
+		return None
 
 def menu_elemental():
 	#special Menu to choose an elemental school
 	width = 35
-	height = 10
+	height = 14
 	#create an off-screen console that represents the menu's window
-	window = libtcod.console_new(width, 10)
+	window = libtcod.console_new(width, height)
 
 	#print the header, with auto-wrap
-	libtcod.console_set_default_foreground(window, libtcod.white)
+	libtcod.console_set_default_foreground(window, config.color_nutr_cr)
 	libtcod.console_print_rect_ex(window, 17, 1, width, height, libtcod.BKGND_NONE, libtcod.CENTER, 'Which Elemental Plane Connection' )
 	libtcod.console_print_rect_ex(window, 17, 2, width, height, libtcod.BKGND_NONE, libtcod.CENTER, 'Would You Like To Improve' )
 
+	libtcod.console_set_default_foreground(window, config.color_air_cr)
 	libtcod.console_print_ex(window, 12, 4, libtcod.BKGND_NONE, libtcod.LEFT, 'Z - Air')
+	libtcod.console_set_default_foreground(window, config.color_spirit_cr)
 	libtcod.console_print_ex(window, 12, 5, libtcod.BKGND_NONE, libtcod.LEFT, 'X - Spirit')
+	libtcod.console_set_default_foreground(window, config.color_water_cr)
 	libtcod.console_print_ex(window, 12, 6, libtcod.BKGND_NONE, libtcod.LEFT, 'C - Water')
+	libtcod.console_set_default_foreground(window, config.color_fire_cr)
 	libtcod.console_print_ex(window, 12, 7, libtcod.BKGND_NONE, libtcod.LEFT, 'V - Fire')
+	libtcod.console_set_default_foreground(window, config.color_earth_cr)
 	libtcod.console_print_ex(window, 12, 8, libtcod.BKGND_NONE, libtcod.LEFT, 'B - Earth')
+	libtcod.console_set_default_foreground(window, config.color_nutr_cr)
+	libtcod.console_print_ex(window, 12, 10, libtcod.BKGND_NONE, libtcod.LEFT, 'H - Physical (HP)')
+	libtcod.console_print_ex(window, 12, 11, libtcod.BKGND_NONE, libtcod.LEFT, 'M - Mental (Mana)')
     
 
 	#blit the contents of "window" to the root console
@@ -177,6 +224,10 @@ def menu_elemental():
 		return 3
 	elif key_char.lower() == 'b':
 		return 4
+	elif key_char.lower() == 'h':
+		return 5
+	elif key_char.lower() == 'm':
+		return 6
 	else:
 		return None
 
@@ -231,15 +282,22 @@ def to_camera_coordinates(x, y):
 	return (x, y)
  
 def initialize_fov():
-	global fov_recompute, fov_map
+	global fov_recompute, fov_map, fov_map_mage, fov_map_full
 	fov_recompute = True
  
 	#create the FOV map, according to the generated map
 	fov_map = libtcod.map_new(config.MAP_WIDTH, config.MAP_HEIGHT)
+	fov_map_mage = libtcod.map_new(config.MAP_WIDTH, config.MAP_HEIGHT)
+	fov_map_full = libtcod.map_new(config.MAP_WIDTH, config.MAP_HEIGHT)
 	for y in range(config.MAP_HEIGHT):
 		for x in range(config.MAP_WIDTH):
-			libtcod.map_set_properties(fov_map, x, y, not gamemap.map[x][y].blocked, not gamemap.map[x][y].block_sight)
- 
+			#player view
+			libtcod.map_set_properties(fov_map, x, y, not gamemap.map[x][y].block_sight, not gamemap.map[x][y].blocked)
+			#mage view
+			libtcod.map_set_properties(fov_map_mage, x, y, not gamemap.map[x][y].block_sight, not gamemap.map[x][y].blocked) 
+			#full view, walls transparent
+			libtcod.map_set_properties(fov_map_full, x, y, True, not gamemap.map[x][y].blocked)
+
 	libtcod.console_clear(con)  #unexplored areas start black (which is the default background color)
 
 
@@ -278,7 +336,7 @@ def render_bar_school(x, y, total_width, value, maximum, bar_color, back_color, 
 noise = libtcod.noise_new(1)
 fov_torchx = 0.0
 def render_all():
-	global fov_map, fov_recompute, pentImg
+	global fov_map, fov_map_mage, fov_map_full, fov_recompute, pentImg
 	global fov_torchx
 
 	libtcod.console_set_color_control(libtcod.COLCTRL_1,libtcod.dark_green,libtcod.black)
@@ -300,6 +358,9 @@ def render_all():
 		#recompute FOV if needed (the player moved or something)
 		fov_recompute = False
 		libtcod.map_compute_fov(fov_map, gameobjects.player.x, gameobjects.player.y, config.TORCH_RADIUS, config.FOV_LIGHT_WALLS, config.FOV_ALGO)
+
+		libtcod.map_compute_fov(fov_map_mage, gameobjects.mage.x, gameobjects.mage.y, gameobjects.mage.ai.chase_range, config.FOV_LIGHT_WALLS, config.FOV_ALGO)
+
 		libtcod.console_clear(con)
 		
 	if fov_torch:
@@ -352,8 +413,23 @@ def render_all():
 						base = libtcod.color_lerp(base, light, l)
 						tilecolor = libtcod.color_lerp( light, gamemap.map[map_x][map_y].color, .75 )
 					libtcod.console_put_char_ex(con, x, y, gamemap.map[map_x][map_y].tile, tilecolor, base)
-
-					#libtcod.console_set_char_background(con, x, y, config.color_light_wall, libtcod.BKGND_SET )
+					if gameinput.draw_radius > 0:
+						sqr_radius = gameinput.draw_radius * gameinput.draw_radius
+						if gameinput.draw_radius_type == 1:
+							r = float(x - gameinput.mouse.cx) * (x - gameinput.mouse.cx) + (y - gameinput.mouse.cy) * (y - gameinput.mouse.cy)
+						if gameinput.draw_radius_type == 2:
+							r = float(camera_x + x - gameobjects.player.x) * (camera_x + x - gameobjects.player.x) + (camera_y + y - gameobjects.player.y) * (camera_y + y - gameobjects.player.y)
+							
+						if r < sqr_radius:
+							l = ((sqr_radius - r) / sqr_radius)/2
+							if l  < 0.0:
+								l = 0.0
+							elif l> 0.5:
+								l = 0.5
+							base = libtcod.color_lerp(base, libtcod.darker_red, l)
+							tilecolor = libtcod.color_lerp( libtcod.darker_red, gamemap.map[map_x][map_y].color, .75 )
+							libtcod.console_put_char_ex(con, x, y, '#', tilecolor, base)
+					
 				else:
 					base = config.color_dark_ground
 					light = config.color_torch
@@ -368,8 +444,22 @@ def render_all():
 						base = libtcod.color_lerp(base, light, l)
 						tilecolor = libtcod.color_lerp( light, gamemap.map[map_x][map_y].color, .75 )
 					libtcod.console_put_char_ex(con, x, y, gamemap.map[map_x][map_y].tile, tilecolor, base)
-					#libtcod.console_set_char_background(con, x, y, config.color_light_ground, libtcod.BKGND_SET )
-
+					if gameinput.draw_radius > 0:
+						sqr_radius = gameinput.draw_radius * gameinput.draw_radius
+						if gameinput.draw_radius_type == 1:
+							r = float(x - gameinput.mouse.cx) * (x - gameinput.mouse.cx) + (y - gameinput.mouse.cy) * (y - gameinput.mouse.cy)
+						if gameinput.draw_radius_type == 2:
+							r = float(camera_x + x - gameobjects.player.x) * (camera_x + x - gameobjects.player.x) + (camera_y + y - gameobjects.player.y) * (camera_y + y - gameobjects.player.y)
+						if r < sqr_radius:
+							l = ((sqr_radius - r) / sqr_radius)/2
+							if l  < 0.0:
+								l = 0.0
+							elif l> 0.5:
+								l = 0.5
+							base = libtcod.color_lerp(base, gameinput.draw_radius_color, l)
+							tilecolor = libtcod.color_lerp( libtcod.darker_red, gamemap.map[map_x][map_y].color, .75 )
+							libtcod.console_put_char_ex(con, x, y, '#', tilecolor, base)
+					
 				
 
 
@@ -413,6 +503,7 @@ def render_all():
 		libtcod.console_set_default_foreground(wor, libtcod.darker_red)
 		libtcod.console_print_ex(wor, config.INFO_BAR_WIDTH-2, 2, libtcod.BKGND_NONE, libtcod.RIGHT, 'Mouse Loc:'+str(gameinput.mouse.cx+camera_x)+':'+str(gameinput.mouse.cy+camera_y))
 	#display names of objects under the mouse
+	libtcod.console_set_default_foreground(wor, libtcod.white)
 	gameinput.get_names_under_mouse()
 	
 	libtcod.console_set_default_foreground(wor, libtcod.dark_amber)
@@ -438,8 +529,11 @@ def render_all():
  	libtcod.console_set_default_foreground(elm, libtcod.blue)
 	libtcod.console_print_ex(elm, 1, 1, libtcod.BKGND_NONE, libtcod.LEFT, 'Elemental Panel')
 
-	#show the player's stats
+	libtcod.console_set_default_foreground(elm, gameobjects.player.color)
+	libtcod.console_print_ex(elm, 1, 2, libtcod.BKGND_NONE, libtcod.LEFT, gameobjects.player.name)
 
+	#show the player's stats
+	libtcod.console_set_default_foreground(elm, libtcod.dark_blue)
 	objHealth = (float(gameobjects.player.fighter.hp) / float(gameobjects.player.fighter.max_hp))*100
 	if objHealth == 100.0:
 		libtcod.console_print_ex(elm, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, '%cPerfect Health%c'%( libtcod.COLCTRL_1,libtcod.COLCTRL_STOP ))
@@ -474,14 +568,6 @@ def render_all():
 	libtcod.console_set_default_foreground(elm, libtcod.dark_amber)
 	libtcod.console_print_ex(elm, config.INFO_BAR_WIDTH-2, 3, libtcod.BKGND_NONE, libtcod.RIGHT, 'Level ' + str(gameobjects.player.level))
 
-
-	#OLD Status Bars
-	#render_bar(2, 5, (config.INFO_BAR_WIDTH-4), 'HP', gameobjects.player.fighter.hp, gameobjects.player.fighter.max_hp, libtcod.light_red, libtcod.darker_red, elm)
-
-	#level_up_xp = config.LEVEL_UP_BASE + gameobjects.player.level * config.LEVEL_UP_FACTOR
-	#render_bar(2, 7, (config.INFO_BAR_WIDTH-4), 'XP', gameobjects.player.fighter.xp, level_up_xp, libtcod.light_green, libtcod.darker_green, elm)
-	
-	
 	school_width = 12
 	school_spacing = 5#(((config.CAMERA_WIDTH / 5) - 10)/2)
 	school_first_y = 7
@@ -489,22 +575,28 @@ def render_all():
 	libtcod.console_set_default_foreground(elm, config.color_air_lt)
 	libtcod.console_print_ex(elm, 2, school_first_y-1, libtcod.BKGND_NONE, libtcod.LEFT, 'Z - Air')
 	render_bar_school(2, school_first_y, school_width, gameobjects.player.fighter.air, gameobjects.player.fighter.el_power, config.color_air_lt, libtcod.darker_yellow, elm)
+	libtcod.console_print_ex(elm, 3, school_first_y+1, libtcod.BKGND_NONE, libtcod.LEFT, gameobjects.player.fighter.air_spell)
+
 	
 	libtcod.console_set_default_foreground(elm, config.color_spirit_lt)
 	libtcod.console_print_ex(elm, 2, school_first_y+(school_spacing*1)-1, libtcod.BKGND_NONE, libtcod.LEFT, 'X - Spirit')
 	render_bar_school(2, school_first_y+(school_spacing*1), school_width, gameobjects.player.fighter.spirit, gameobjects.player.fighter.el_power, config.color_spirit_cr, libtcod.darker_purple, elm)
+	libtcod.console_print_ex(elm, 3,  school_first_y+(school_spacing*1)+1, libtcod.BKGND_NONE, libtcod.LEFT, gameobjects.player.fighter.spirit_spell)
 
 	libtcod.console_set_default_foreground(elm, config.color_water_lt)
 	libtcod.console_print_ex(elm, 2, school_first_y+(school_spacing*2)-1, libtcod.BKGND_NONE, libtcod.LEFT, 'C - Water')
 	render_bar_school(2, school_first_y+(school_spacing*2), school_width, gameobjects.player.fighter.water, gameobjects.player.fighter.el_power, config.color_water_cr, libtcod.darker_blue, elm)
+	libtcod.console_print_ex(elm, 3,  school_first_y+(school_spacing*2)+1, libtcod.BKGND_NONE, libtcod.LEFT, gameobjects.player.fighter.water_spell)
 
 	libtcod.console_set_default_foreground(elm, config.color_fire_lt)
 	libtcod.console_print_ex(elm, 2, school_first_y+(school_spacing*3)-1, libtcod.BKGND_NONE, libtcod.LEFT, 'V - Fire')
 	render_bar_school(2, school_first_y+(school_spacing*3), school_width, gameobjects.player.fighter.fire, gameobjects.player.fighter.el_power, config.color_fire_cr, libtcod.darker_red, elm)
+	libtcod.console_print_ex(elm, 3,  school_first_y+(school_spacing*3)+1, libtcod.BKGND_NONE, libtcod.LEFT, gameobjects.player.fighter.fire_spell)
 
 	libtcod.console_set_default_foreground(elm, config.color_earth_lt)
 	libtcod.console_print_ex(elm, 2, school_first_y+(school_spacing*4)-1, libtcod.BKGND_NONE, libtcod.LEFT, 'B - Earth')
 	render_bar_school(2, school_first_y+(school_spacing*4), school_width, gameobjects.player.fighter.earth, gameobjects.player.fighter.el_power, config.color_earth_cr, libtcod.darker_green, elm)
+	libtcod.console_print_ex(elm, 3,  school_first_y+(school_spacing*4)+1, libtcod.BKGND_NONE, libtcod.LEFT, gameobjects.player.fighter.earth_spell)
 	
 	if config.DEBUG_MODE:
 		# Debug Player X, Y cords
@@ -528,16 +620,6 @@ def render_all():
 
 
 
-#  *
-#*****
-# * *
-	#libtcod.console_put_char(elm, 28, 15, '*', libtcod.BKGND_NONE)
-	#libtcod.console_put_char(elm, 27, 16, '*', libtcod.BKGND_NONE)
-	#libtcod.console_put_char(elm, 28, 16, '*', libtcod.BKGND_NONE)
-	#libtcod.console_put_char(elm, 29, 16, '*', libtcod.BKGND_NONE)
-	#libtcod.console_put_char(elm, 28, 17, '*', libtcod.BKGND_NONE)
-
-	
 
 	#star cords 16,5 - 40,29
 	gameobjects.player.fighter.place_star()
@@ -555,7 +637,57 @@ def render_all():
 	libtcod.console_clear(mag)
  	libtcod.console_set_default_foreground(mag, libtcod.green)
 	libtcod.console_print_ex(mag, 1, 1, libtcod.BKGND_NONE, libtcod.LEFT, 'Mage Panel')
+	libtcod.console_set_default_foreground(mag, gameobjects.mage.color)
+	libtcod.console_print_ex(mag, 1, 2, libtcod.BKGND_NONE, libtcod.LEFT, gameobjects.mage.name)
 	
+	#show the mage's stats
+	libtcod.console_set_default_foreground(mag, libtcod.dark_blue)
+	objHealth = (float(gameobjects.mage.fighter.hp) / float(gameobjects.mage.fighter.max_hp))*100
+	if objHealth == 100.0:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, '%cPerfect Health%c'%( libtcod.COLCTRL_1,libtcod.COLCTRL_STOP ))
+	elif objHealth >= 80.0:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, '(%cGood Health%c)'%( libtcod.COLCTRL_2,libtcod.COLCTRL_STOP ))
+	elif objHealth >= 60.0:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, '((%cLightly Hurt%c))'%( libtcod.COLCTRL_3,libtcod.COLCTRL_STOP ))
+	elif objHealth >= 40.0:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, '(((%cBadly Wounded%c)))'%( libtcod.COLCTRL_4,libtcod.COLCTRL_STOP ))
+	elif objHealth > 0:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, '((((%cAlmost Dead%c))))'%( libtcod.COLCTRL_5,libtcod.COLCTRL_STOP ))
+	else:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, 'XXX%cDead%cXXX'%( libtcod.COLCTRL_5,libtcod.COLCTRL_STOP ))
+
+	objMana = (float(gameobjects.mage.fighter.mana) / float(gameobjects.mage.fighter.max_mana))*100
+	if objMana == 100.0:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 2, libtcod.BKGND_NONE, libtcod.RIGHT, '%cFull Mana%c'%( libtcod.COLCTRL_1,libtcod.COLCTRL_STOP ))
+	elif objMana >= 80.0:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 2, libtcod.BKGND_NONE, libtcod.RIGHT, '(%cGood Mana%c)'%( libtcod.COLCTRL_2,libtcod.COLCTRL_STOP ))
+	elif objMana >= 60.0:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 2, libtcod.BKGND_NONE, libtcod.RIGHT, '((%cSome Mana%c))'%( libtcod.COLCTRL_3,libtcod.COLCTRL_STOP ))
+	elif objMana >= 40.0:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 2, libtcod.BKGND_NONE, libtcod.RIGHT, '(((%cLow Mana%c)))'%( libtcod.COLCTRL_4,libtcod.COLCTRL_STOP ))
+	elif objMana > 0:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 2, libtcod.BKGND_NONE, libtcod.RIGHT, '((((%cAlmost No Mana%c))))'%( libtcod.COLCTRL_5,libtcod.COLCTRL_STOP ))
+	else:
+		libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 2, libtcod.BKGND_NONE, libtcod.RIGHT, '(((((%cNo Mana%c)))))'%( libtcod.COLCTRL_5,libtcod.COLCTRL_STOP ))
+
+
+
+	# Current Level
+	libtcod.console_set_default_foreground(mag, libtcod.dark_amber)
+	libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 3, libtcod.BKGND_NONE, libtcod.RIGHT, 'Level ' + str(gameobjects.mage.level))
+
+
+	text_height = libtcod.console_get_height_rect(mag, 2, 3, config.INFO_BAR_WIDTH-15, config.SCREEN_HEIGHT-22, gameobjects.mage.ai.mage_thoughts)
+	libtcod.console_print_rect_ex(mag, 2, 3, config.INFO_BAR_WIDTH-15, text_height, libtcod.BKGND_NONE, libtcod.LEFT, gameobjects.mage.ai.mage_thoughts)
+
+	if config.DEBUG_MODE:
+		# Current Target
+		libtcod.console_set_default_foreground(mag, libtcod.dark_red)
+		if gameobjects.mage.ai.cur_target is not None:
+			libtcod.console_print_ex(mag, 25, 1, libtcod.BKGND_NONE, libtcod.RIGHT, 'Target: ' + str(gameobjects.mage.ai.cur_target.x)+':'+ str(gameobjects.mage.ai.cur_target.x))
+		libtcod.console_print_ex(mag, 25, 2, libtcod.BKGND_NONE, libtcod.RIGHT, 'Explore:'+ str(gameobjects.mage.ai.mage_min_moves_floor))
+		
+
 	libtcod.console_set_default_foreground(mag, libtcod.white)
 	libtcod.console_print_frame(mag,0, 0, config.INFO_BAR_WIDTH, 10, clear=False)
 	libtcod.console_blit(mag, 0, 0, config.INFO_BAR_WIDTH, 10, 0, config.CAMERA_WIDTH, config.CAMERA_HEIGHT-10)
