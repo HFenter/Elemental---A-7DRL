@@ -32,7 +32,7 @@ def cast_spark(power1=15, power2=15, power3=0):
 		else:
 			defpw = 1
 		rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-		spell_dmg = int(round((power1 * defpw + rndm), 0))
+		spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 		if spell_dmg <= 0:
 			gamemessages.message(monster.name + ' resists the Spark Spell.', libtcod.dark_orange)
 		else:
@@ -73,7 +73,7 @@ def cast_flame(power1=30, power2=3, power3=0):
 					else:
 						defpw = 1
 					rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-					spell_dmg = int(round((power1 * defpw + rndm), 0))
+					spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 					if spell_dmg <= 0:
 						gamemessages.message(obj.name + ' resists the Flame Spell.', libtcod.dark_orange)
 					else:
@@ -106,7 +106,7 @@ def cast_fireball(power1=30, power2=3, power3=0):
 				else:
 					defpw = 1
 				rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-				spell_dmg = int(round((power1 * defpw + rndm), 0))
+				spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 				if spell_dmg <= 0:
 					gamemessages.message(obj.name + ' resists the Inferno Spell.', libtcod.dark_orange)
 				else:
@@ -136,7 +136,7 @@ def cast_puff(power1=15, power2=1, power3=0):
 		else:
 			defpw = 1
 		rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-		spell_dmg = int(round((power1 * defpw + rndm), 0))
+		spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 		if spell_dmg <= 0:
 			gamemessages.message(monster.name + ' resists the Puff Spell.', libtcod.dark_orange)
 		else:
@@ -180,7 +180,7 @@ def cast_wind(power1=30, power2=1, power3=1):
 					else:
 						defpw = 1
 					rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-					spell_dmg = int(round((power1 * defpw + rndm), 0))
+					spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 					if spell_dmg <= 0:
 						gamemessages.message(obj.name + ' resists the Wind Spell.', libtcod.dark_yellow)
 					else:
@@ -219,7 +219,7 @@ def cast_tornado(power1=30, power2=1, power3=1):
 				else:
 					defpw = 1
 				rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-				spell_dmg = int(round((power1 * defpw + rndm), 0))
+				spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 				if spell_dmg <= 0:
 					gamemessages.message(obj.name + ' resists the Tornado Spell.', libtcod.dark_yellow)
 				else:
@@ -257,7 +257,7 @@ def cast_pebble(power1=15, power2=1, power3=0):
 		else:
 			defpw = 1
 		rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-		spell_dmg = int(round((power1 * defpw + rndm), 0))
+		spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 		if spell_dmg <= 0:
 			gamemessages.message(monster.name + ' resists the Hail of Pebbles Spell.', libtcod.dark_green)
 		else:
@@ -283,7 +283,7 @@ def cast_rock(power1=30, power2=1, power3=1):
 		gameinput.draw_radius_type = 1
 		return False
 	else:
-		gamemessages.message('Huge rocks rain down all around you, crushing everything within ' + str(power3) + ' tiles and burying their feet, rooting them for ' + str(power3) + ' turns!', libtcod.dark_green)
+		gamemessages.message('Huge rocks rain down all around you, crushing everything within ' + str(power2) + ' tiles and burying their feet, rooting them for ' + str(power3) + ' turns!', libtcod.dark_green)
 		for obj in gameobjects.objects:  #damage every fighter in range
 			if obj != gameobjects.player and int(math.floor(obj.distance(x, y))) <= power2 and obj.fighter:
 				if obj == gameobjects.mage:
@@ -297,7 +297,7 @@ def cast_rock(power1=30, power2=1, power3=1):
 					else:
 						defpw = 1
 					rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-					spell_dmg = int(round((power1 * defpw + rndm), 0))
+					spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 					if spell_dmg <= 0:
 						gamemessages.message(obj.name + ' resists the Falling Rocks Spell.', libtcod.dark_green)
 					else:
@@ -332,7 +332,7 @@ def cast_boulder(power1=30, power2=1, power3=1):
 				else:
 					defpw = 1
 				rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-				spell_dmg = int(round((power1 * defpw + rndm), 0))
+				spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 				if spell_dmg <= 0:
 					gamemessages.message(obj.name + ' resists the Boulders Effects.', libtcod.dark_green)
 				else:
@@ -364,7 +364,7 @@ def cast_drip(power1=15, power2=1, power3=0):
 		else:
 			defpw = 1
 		rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-		spell_dmg = int(round((power1 * defpw + rndm), 0))
+		spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 		if spell_dmg <= 0:
 			gamemessages.message(monster.name + ' resists the Drip Spell.', libtcod.dark_blue)
 		else:
@@ -407,7 +407,7 @@ def cast_flood(power1=30, power2=1, power3=1):
 					else:
 						defpw = 1
 					rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-					spell_dmg = int(round((power1 * defpw + rndm), 0))
+					spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 					if spell_dmg <= 0:
 						gamemessages.message(obj.name + ' resists the Flood Spell.', libtcod.dark_blue)
 					else:
@@ -446,7 +446,7 @@ def cast_torrent(power1=30, power2=1, power3=1):
 				else:
 					defpw = 1
 				rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-				spell_dmg = int(round((power1 * defpw + rndm), 0))
+				spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 				if spell_dmg <= 0:
 					gamemessages.message(obj.name + ' resists the Torrents effects.', libtcod.dark_blue)
 				else:
@@ -478,7 +478,7 @@ def cast_suggestion(power1=15, power2=1, power3=0):
 		else:
 			defpw = 1
 		rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-		spell_dmg = int(round((power1 * defpw + rndm), 0))
+		spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 		if spell_dmg <= 0:
 			gamemessages.message(monster.name + ' resists the Suggestion Spell.', libtcod.dark_purple)
 		else:
@@ -519,7 +519,7 @@ def cast_confusion(power1=15, power2=1, power3=0):
 					else:
 						defpw = 1
 					rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-					spell_dmg = int(round((power1 * defpw + rndm), 0))
+					spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 					if spell_dmg <= 0:
 						gamemessages.message(obj.name + ' resists the effects of Insanity.', libtcod.dark_purple)
 					else:
@@ -554,7 +554,7 @@ def cast_insanity(power1=15, power2=1, power3=0):
 				else:
 					defpw = 1
 				rndm = ( libtcod.random_get_float(0, -.1, .1) * power1)
-				spell_dmg = int(round((power1 * defpw + rndm), 0))
+				spell_dmg = int(round((power1 * (defpw + rndm)), 0))
 				if spell_dmg <= 0:
 					gamemessages.message(obj.name + ' resists the effects of Insanity.', libtcod.dark_purple)
 				else:

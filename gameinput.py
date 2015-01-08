@@ -223,12 +223,14 @@ def get_names_under_mouse():
 				else:
 					objName += '(%cAlmost Dead%c)'
 					argColor += 'libtcod.COLCTRL_5,libtcod.COLCTRL_STOP'
+				if config.DEBUG_MODE:
+					objName += '(HP:'+str(obj.fighter.hp)+'/'+str(obj.fighter.max_hp)+' XP:'+str(obj.fighter.xp)+')'
 
 				if isinstance(obj.ai, gameobjects.ChaseMonster):				
 					if obj.ai.is_giving_chase and obj.ai.attack_target == gameobjects.player and obj.fighter.rooted==0:
 						objName += '(%cAttacking You%c)'
 						argColor += ',libtcod.COLCTRL_5,libtcod.COLCTRL_STOP'
-					if obj.ai.is_giving_chase and obj.ai.attack_target == gameobjects.mage and obj.fighter.rooted==0:
+					elif obj.ai.is_giving_chase and obj.ai.attack_target == gameobjects.mage and obj.fighter.rooted==0:
 						objName += '(%cAttacking Mage%c)'
 						argColor += ',libtcod.COLCTRL_5,libtcod.COLCTRL_STOP'
 					elif obj.fighter.rooted >0:

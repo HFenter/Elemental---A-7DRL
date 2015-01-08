@@ -506,7 +506,7 @@ def render_all():
 	libtcod.console_set_default_foreground(wor, libtcod.white)
 	gameinput.get_names_under_mouse()
 	
-	libtcod.console_set_default_foreground(wor, libtcod.dark_amber)
+	libtcod.console_set_default_foreground(wor, libtcod.dark_crimson)
 	libtcod.console_print_ex(wor, config.INFO_BAR_WIDTH-2, 1, libtcod.BKGND_NONE, libtcod.RIGHT, 'Dungeon Level ' + str(gamemap.dungeon_level))
 	
 	libtcod.console_set_default_foreground(wor, libtcod.white)
@@ -565,7 +565,7 @@ def render_all():
 
 
 	# Current Level
-	libtcod.console_set_default_foreground(elm, libtcod.dark_amber)
+	libtcod.console_set_default_foreground(elm, libtcod.dark_crimson)
 	libtcod.console_print_ex(elm, config.INFO_BAR_WIDTH-2, 3, libtcod.BKGND_NONE, libtcod.RIGHT, 'Level ' + str(gameobjects.player.level))
 
 	school_width = 12
@@ -673,10 +673,10 @@ def render_all():
 
 
 	# Current Level
-	libtcod.console_set_default_foreground(mag, libtcod.dark_amber)
+	libtcod.console_set_default_foreground(mag, libtcod.dark_crimson)
 	libtcod.console_print_ex(mag, config.INFO_BAR_WIDTH-2, 3, libtcod.BKGND_NONE, libtcod.RIGHT, 'Level ' + str(gameobjects.mage.level))
 
-
+	libtcod.console_set_default_foreground(mag, libtcod.dark_flame)
 	text_height = libtcod.console_get_height_rect(mag, 2, 3, config.INFO_BAR_WIDTH-15, config.SCREEN_HEIGHT-22, gameobjects.mage.ai.mage_thoughts)
 	libtcod.console_print_rect_ex(mag, 2, 3, config.INFO_BAR_WIDTH-15, text_height, libtcod.BKGND_NONE, libtcod.LEFT, gameobjects.mage.ai.mage_thoughts)
 

@@ -310,11 +310,11 @@ class Elemental:
 		# attack using the strongest school of power
 		
 		#base damage
-		dmg_mult = libtcod.random_get_int(0, 0, (self.dice*100))
+		dmg_mult = libtcod.random_get_int(0, 50, (self.dice*100))
 		dmg = math.floor( (self.power * dmg_mult)/100)
 
 		#base enemy defence 
-		den_mult = libtcod.random_get_int(0, 0, (target.fighter.dice*100))
+		den_mult = libtcod.random_get_int(0, 25, (target.fighter.dice*100))
 		den = math.floor( (target.fighter.defence * den_mult)/100)
 	
 		#elemental attack/defence
@@ -415,7 +415,7 @@ class Elemental:
 		#Air School
 		#tier 1 (Puff - blow 1 enemy) (3 - 20 Air dmg x 1 target / move 1-3 squares back)
 		did_turn = False
-		mana_burn = int(round((self.air / 2 * self.owner.level), 0))+5
+		mana_burn = int(round((self.air / 4 * self.owner.level), 0))+5
 		print 'Using Mana:'+str(mana_burn)
 		if self.mana >= mana_burn:
 			if self.air >= 1 and self.air <=25:
@@ -486,7 +486,7 @@ class Elemental:
 		#Spirit School
 		#tier 1 (Suggestion)
 		did_turn = False
-		mana_burn = int(round((self.spirit / 2 * self.owner.level), 0))+5
+		mana_burn = int(round((self.spirit / 4 * self.owner.level), 0))+5
 		print 'Using Mana:'+str(mana_burn)
 		if self.mana >= mana_burn:
 			if self.spirit >= 1 and self.spirit <=25:
@@ -556,7 +556,7 @@ class Elemental:
 		#Water School
 		#tier 1 (Drip - mimics Spirit Suggestion)
 		did_turn = False
-		mana_burn = int(round((self.water / 2 * self.owner.level), 0))+5
+		mana_burn = int(round((self.water / 4 * self.owner.level), 0))+5
 		print 'Using Mana:'+str(mana_burn)
 		if self.mana >= mana_burn:
 			if self.water >= 1 and self.water <=25:
@@ -627,7 +627,7 @@ class Elemental:
 		#Fire School
 		#tier 1 (Ember - burn 1 enemy) (5 - 30 flame dmg x 1 target)
 		did_turn = False
-		mana_burn = int(round((self.fire / 2 * self.owner.level), 0))+5
+		mana_burn = int(round((self.fire / 4 * self.owner.level), 0))+5
 		print 'Using Mana:'+str(mana_burn)
 		if self.mana >= mana_burn:
 			if self.fire >= 1 and self.fire <=25:
@@ -677,7 +677,7 @@ class Elemental:
 		#Earth School
 		#tier 1 (Pebble - hit 1 enemy) (3 - 20 Earth dmg x 1 target / rooted 1-3 turns)
 		did_turn = False
-		mana_burn = int(round((self.earth / 2 * self.owner.level), 0))+5
+		mana_burn = int(round((self.earth / 4 * self.owner.level), 0))+5
 		print 'Using Mana:'+str(mana_burn)
 		if self.mana >= mana_burn:
 			if self.earth >= 1 and self.earth <=25:
@@ -763,12 +763,12 @@ class MagePet:
 	@property
 	def power(self):  #return actual power, by summing up the bonuses from all equipped items
 		bonus = 0#sum(equipment.power_bonus for equipment in get_all_equipped(self.owner))
-		return self.base_power + bonus
+		return math.ceil(self.owner.level / 2) #self.base_power + bonus
 
 	@property
 	def defence(self):  #return actual defence, by summing up the bonuses from all equipped items
 		bonus = 0#sum(equipment.defence_bonus for equipment in get_all_equipped(self.owner))
-		return self.base_defence + bonus
+		return math.ceil(self.owner.level / 3)#self.base_defence + bonus
 
 	@property
 	def max_hp(self):  #return actual max_hp, by summing up the bonuses from all equipped items
@@ -787,10 +787,12 @@ class MagePet:
 
 	def attack(self, target):
 		#a simple formula for attack damage
+		
+		#=FLOOR( ((CEILING(AH2/2, 1)*(1+CEILING(AH2/3, 1))*100)/100), 1)
 
-		dmg_mult = libtcod.random_get_int(0, 0, (self.dice*100))
+		dmg_mult = libtcod.random_get_int(0, 50, (self.dice*100))
 		dmg = math.floor( (self.power * dmg_mult)/100)
-		den_mult = libtcod.random_get_int(0, 0, (target.fighter.dice*100))
+		den_mult = libtcod.random_get_int(0, 25, (target.fighter.dice*100))
 		den = math.floor( (target.fighter.defence * den_mult)/100)
 
 		damage = int(dmg - den)
@@ -1048,9 +1050,9 @@ class MonsterFighter:
 	def attack(self, target):
 		#a simple formula for attack damage
 
-		dmg_mult = libtcod.random_get_int(0, 0, (self.dice*100))
+		dmg_mult = libtcod.random_get_int(0, 50, (self.dice*100))
 		dmg = math.floor( (self.power * dmg_mult)/100)
-		den_mult = libtcod.random_get_int(0, 0, (target.fighter.dice*100))
+		den_mult = libtcod.random_get_int(0, 25, (target.fighter.dice*100))
 		den = math.floor( (target.fighter.defence * den_mult)/100)
 
 		damage = int(dmg - den)
@@ -1266,7 +1268,7 @@ def check_level_up():
 def player_death(player):
 	#the game ended!
 	global game_state
-	gamemessages.message('You were destroyed.  Your body fades from the physical realm and you ar teleported back to the realm of Elementals.', libtcod.red)
+	gamemessages.message('You were destroyed.  Your body fades from the physical realm and you are teleported back to the realm of Elementals.', libtcod.red)
 	gamemessages.message('After a few seconds, your vision goes blurry again, and you feel yourself pulled back to the Physical Realm.', libtcod.red)
 	gamemessages.message('When your vision clears, you see your mage standing next to you. ', libtcod.red)
 	gamemessages.message('\"I wasn\'t quite done with you!\" he says, then turns back to his exploration of the Dungeon...', libtcod.red)
@@ -1434,7 +1436,7 @@ def get_monster_types():
 	global monster_list, monster_chances, max_monsters
 	monster_chances = {}
 	#maximum number of monsters per room
-	max_monsters = from_dungeon_level([[2, 1], [3, 4], [5, 6]])
+	max_monsters = from_dungeon_level([[2, 1], [3, 3], [4, 5],[3, 7]])
 	
 	json_data=open('data/monsters2.json')
 	monster_list = json.load(json_data)
@@ -1447,11 +1449,16 @@ def get_monster_types():
 def create_monster(type_id, start_x, start_y):
 	#create a monster from the monster list
 	global monster_list, numMonsters
+	base_hp = int(monster_list["Monsters"][type_id]["hp"])
+	base_xp = int(monster_list["Monsters"][type_id]["xp"])
+	HP_Deep = math.ceil((base_hp + (base_hp*((gamemap.dungeon_level * 10) / 100 ))))
+	XP_Deep = math.ceil((base_xp + (base_xp*((gamemap.dungeon_level * 10) / 100 ))))
+	
 	fighter_component = MonsterFighter(
-		hp=int(monster_list["Monsters"][type_id]["hp"]),
+		hp=HP_Deep,
 		defence=int(monster_list["Monsters"][type_id]["defence"]),
 		power=int(monster_list["Monsters"][type_id]["power"]),
-		xp=int(monster_list["Monsters"][type_id]["xp"]),
+		xp=XP_Deep,
 		dice = int(monster_list["Monsters"][type_id]["dice"]),
 		death_function=eval(monster_list["Monsters"][type_id]["death_function"]), 
 		essence=int(monster_list["Monsters"][type_id]["essence"]),
